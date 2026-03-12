@@ -339,6 +339,91 @@
       .project-btn:hover {
         background: var(--accent-strong);
       }
+      .project-actions {
+        margin-top: 1.25rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.9rem;
+        align-items: center;
+      }
+      .project-actions .project-btn {
+        margin-top: 0;
+      }
+      .project-btn-secondary {
+        background: transparent;
+        color: var(--text);
+        border: 1px solid var(--line);
+      }
+      .project-btn-secondary:hover {
+        background: var(--accent-soft);
+        color: var(--accent-strong);
+      }
+      .project-btn-secondary:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+      .projects-gallery-wrap {
+        margin-top: 2rem;
+        border: 1px solid var(--line);
+        border-radius: 1.6rem;
+        padding: 1.4rem;
+        background: color-mix(in srgb, var(--card) 90%, transparent);
+      }
+      .projects-gallery-wrap[hidden] {
+        display: none;
+      }
+      .projects-gallery-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        align-items: center;
+        margin-bottom: 1rem;
+      }
+      .projects-gallery-head p {
+        color: var(--muted);
+      }
+      .projects-gallery {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .project-gallery-card {
+        border: 1px solid var(--line);
+        border-radius: 1.25rem;
+        padding: 1.15rem;
+        background: color-mix(in srgb, var(--card) 94%, transparent);
+      }
+      .project-gallery-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+      }
+      .project-gallery-emoji {
+        width: 3rem;
+        height: 3rem;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        background: var(--accent-soft);
+        color: var(--accent-strong);
+      }
+      .project-gallery-card h4 {
+        margin-top: 1rem;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--text);
+      }
+      .project-gallery-card p {
+        margin-top: 0.7rem;
+        color: var(--muted);
+        line-height: 1.65;
+      }
+      .project-gallery-card a {
+        margin-top: 1rem;
+      }
       .cert-grid {
         margin-top: 2rem;
         display: grid;
@@ -527,6 +612,9 @@
       }
       @media (max-width: 860px) {
         .cert-grid {
+          grid-template-columns: 1fr;
+        }
+        .projects-gallery {
           grid-template-columns: 1fr;
         }
       }
@@ -1143,7 +1231,18 @@
               </svg>
               <span id="project-stars">2</span>
             </div>
-            <a id="project-cta" href="#" class="project-btn">In Dev <span aria-hidden="true">→</span></a>
+            <div class="project-actions">
+              <a id="project-cta" href="#" class="project-btn">In Dev <span aria-hidden="true">→</span></a>
+              <button
+                id="projects-toggle"
+                class="project-btn project-btn-secondary"
+                type="button"
+                aria-expanded="false"
+                aria-controls="projects-gallery-wrap"
+              >
+                View All Projects
+              </button>
+            </div>
           </div>
 
           <button id="project-next" class="project-nav-btn next" type="button" aria-label="Next project">
@@ -1164,6 +1263,16 @@
               </svg>
             </button>
           </div>
+        </div>
+
+        <div id="projects-gallery-wrap" class="projects-gallery-wrap reveal" hidden>
+          <div class="projects-gallery-head">
+            <div>
+              <h3 class="text-2xl font-semibold">All Projects</h3>
+              <p>Browse every project card in one place.</p>
+            </div>
+          </div>
+          <div id="projects-gallery" class="projects-gallery"></div>
         </div>
       </section>
 
@@ -1275,6 +1384,9 @@
       const projectEmoji = document.getElementById("project-emoji");
       const projectStars = document.getElementById("project-stars");
       const projectCta = document.getElementById("project-cta");
+      const projectsToggle = document.getElementById("projects-toggle");
+      const projectsGalleryWrap = document.getElementById("projects-gallery-wrap");
+      const projectsGallery = document.getElementById("projects-gallery");
       const contactForm = document.getElementById("contact-form");
       const statusText = document.getElementById("form-status");
       const submitButton = contactForm.querySelector('button[type="submit"]');
@@ -1422,6 +1534,66 @@
       ];
 
       let activeProjectIndex = 0;
+      let isProjectsGalleryOpen = false;
+
+      const renderProjectsGallery = () => {
+        if (!projectsGallery || !projectsGalleryWrap || !projectsToggle) return;
+
+        const hasProjects = Array.isArray(projectsData) && projectsData.length > 0;
+        projectsGallery.innerHTML = "";
+        projectsToggle.disabled = !hasProjects;
+
+        if (!hasProjects) {
+          projectsGalleryWrap.hidden = true;
+          projectsToggle.setAttribute("aria-expanded", "false");
+          projectsToggle.textContent = "View All Projects";
+          return;
+        }
+
+        projectsToggle.textContent = isProjectsGalleryOpen ? "Hide All Projects" : "View All Projects";
+        projectsToggle.setAttribute("aria-expanded", String(isProjectsGalleryOpen));
+        projectsGalleryWrap.hidden = !isProjectsGalleryOpen;
+
+        projectsData.forEach((item, index) => {
+          const card = document.createElement("article");
+          card.className = "project-gallery-card";
+
+          const top = document.createElement("div");
+          top.className = "project-gallery-top";
+
+          const emoji = document.createElement("span");
+          emoji.className = "project-gallery-emoji";
+          emoji.textContent = item.emoji || "PRJ";
+
+          const stars = document.createElement("div");
+          stars.className = "project-stars";
+          stars.innerHTML =
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="m12 3.5 2.75 5.58 6.16.9-4.46 4.35 1.05 6.14L12 17.58 6.5 20.47l1.05-6.14L3.1 9.98l6.15-.9L12 3.5z" /></svg>';
+          const starsValue = document.createElement("span");
+          starsValue.textContent = String(item.stars ?? 0);
+          stars.appendChild(starsValue);
+
+          top.appendChild(emoji);
+          top.appendChild(stars);
+
+          const title = document.createElement("h4");
+          title.textContent = item.title || `Project ${index + 1}`;
+
+          const description = document.createElement("p");
+          description.textContent = item.description || "Project details will be added soon.";
+
+          const link = document.createElement("a");
+          link.className = "project-btn";
+          link.href = item.href || "#";
+          link.textContent = `${item.cta || "Open Project"} ->`;
+
+          card.appendChild(top);
+          card.appendChild(title);
+          card.appendChild(description);
+          card.appendChild(link);
+          projectsGallery.appendChild(card);
+        });
+      };
 
       const renderProject = () => {
         const hasProjects = Array.isArray(projectsData) && projectsData.length > 0;
@@ -1437,6 +1609,7 @@
           projectStars.textContent = "0";
           projectCta.textContent = "Stay Tuned ->";
           projectCta.href = "#";
+          renderProjectsGallery();
           return;
         }
         projectTitle.textContent = item.title;
@@ -1445,6 +1618,7 @@
         projectStars.textContent = String(item.stars);
         projectCta.textContent = `${item.cta} ->`;
         projectCta.href = item.href || "#";
+        renderProjectsGallery();
       };
 
       const stepProject = (delta) => {
@@ -1459,6 +1633,12 @@
       [projectNextBtn, projectNextBtnMobile].forEach((btn) => {
         if (btn) btn.addEventListener("click", () => stepProject(1));
       });
+      if (projectsToggle) {
+        projectsToggle.addEventListener("click", () => {
+          isProjectsGalleryOpen = !isProjectsGalleryOpen;
+          renderProjectsGallery();
+        });
+      }
 
       renderProject();
 
