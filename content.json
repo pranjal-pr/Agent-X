@@ -1,0 +1,177 @@
+{
+  "visibility": {
+    "about": true,
+    "experience": true,
+    "skills": true,
+    "projects": true,
+    "certifications": true,
+    "contact": true
+  },
+  "subtitles": {
+    "about": "My Introduction",
+    "experience": "My journey in the academic & professional front",
+    "skills": "My toolkit for building machine learning models and shipping them into real products.",
+    "projects": "My independent projects & contributions",
+    "certifications": "Verified learning milestones in machine learning, AI, and software engineering.",
+    "contact": "Send a message and I will get back to you soon."
+  },
+  "hero": {
+    "brand": "Pranjal",
+    "name": "Hi, I am Pranjal",
+    "subtitle": "B.Tech CSE Student at Poornima University building intelligent systems from data to deployment."
+  },
+  "about": {
+    "intro": "As a B.Tech CSE student specializing in AI, Machine Learning, and DevOps, I focus on designing practical intelligent systems and deploying them with reliability. I enjoy translating ideas into real products through clean architecture, robust engineering, and performance-driven implementation.",
+    "stats": [
+      {
+        "value": "04+",
+        "label": "Years XP"
+      },
+      {
+        "value": "23+",
+        "label": "Projects"
+      },
+      {
+        "value": "03+",
+        "label": "Domains"
+      }
+    ]
+  },
+  "skills": {
+    "subtitle": "My toolkit for building machine learning models and shipping them into real products.",
+    "cards": [
+      {
+        "title": "Foundations",
+        "description": "Core analysis, stats, and experimentation basics.",
+        "tags": [
+          "Python",
+          "SQL",
+          "Data Cleaning",
+          "EDA",
+          "Data Storytelling"
+        ]
+      },
+      {
+        "title": "Machine Learning",
+        "description": "Modeling, features, and evaluation for real datasets.",
+        "tags": [
+          "scikit-learn",
+          "XGBoost",
+          "Feature Engineering",
+          "Model Evaluation",
+          "Hyperparameter Tuning",
+          "Pipelines"
+        ]
+      },
+      {
+        "title": "Deep Learning",
+        "description": "Neural models for language, vision, and sequence tasks.",
+        "tags": [
+          "PyTorch",
+          "TensorFlow",
+          "Neural Networks",
+          "CNNs",
+          "RNNs",
+          "NLP"
+        ]
+      },
+      {
+        "title": "AI Engineering",
+        "description": "LLM applications, retrieval, and responsible AI systems.",
+        "tags": [
+          "Transformers",
+          "LLMs",
+          "Prompt Engineering",
+          "RAG",
+          "Vector Databases",
+          "Embeddings",
+          "Evaluation"
+        ]
+      },
+      {
+        "title": "MLOps and Deployment",
+        "description": "Packaging, serving, and tracking models in production.",
+        "tags": [
+          "Docker",
+          "FastAPI",
+          "MLflow",
+          "Git",
+          "CI/CD",
+          "Model Serving",
+          "Monitoring"
+        ]
+      },
+      {
+        "title": "Visualization",
+        "description": "Clear charts and stakeholder-ready dashboards.",
+        "tags": [
+          "Matplotlib",
+          "Seaborn",
+          "Plotly",
+          "Dashboards"
+        ]
+      }
+    ]
+  },
+  "projects": {
+    "subtitle": "My independent projects & contributions",
+    "items": [
+      {
+        "title": "Movie Recommender System",
+        "description": "Content-based recommendation engine hosted on Hugging Face for personalized movie suggestions.",
+        "stars": 2,
+        "emoji": "MOV",
+        "cta": "Live Demo",
+        "href": "#"
+      },
+      {
+        "title": "Multi-Model AI Chatbot",
+        "description": "An interactive chatbot interface built with Streamlit and support for multiple model backends.",
+        "stars": 3,
+        "emoji": "BOT",
+        "cta": "In Dev",
+        "href": "#"
+      },
+      {
+        "title": "AstraRAG Chatbot",
+        "description": "Agentic Retrieval-Augmented Generation chatbot focused on contextual understanding and accurate responses.",
+        "stars": 4,
+        "emoji": "RAG",
+        "cta": "In Dev",
+        "href": "#"
+      },
+      {
+        "title": "Hospital Management System",
+        "description": "Robust backend platform for managing patient records, scheduling, billing, and hospital workflows.",
+        "stars": 3,
+        "emoji": "HMS",
+        "cta": "Case Study",
+        "href": "#"
+      },
+      {
+        "title": "Credit Card Fraud Detection",
+        "description": "Machine learning model to detect fraudulent transactions with data preprocessing and anomaly scoring.",
+        "stars": 5,
+        "emoji": "CCD",
+        "cta": "In Dev",
+        "href": "#"
+      }
+    ]
+  },
+  "certifications": {
+    "subtitle": "Verified learning milestones in machine learning, AI, and software engineering.",
+    "items": [
+      {
+        "year": "2024",
+        "title": "Machine Learning Specialization",
+        "org": "Coursera",
+        "href": "#"
+      }
+    ]
+  },
+  "contact": {
+    "email": "pranjal@example.com",
+    "github": "https://github.com/your-username",
+    "linkedin": "https://linkedin.com/in/your-username"
+  }
+}

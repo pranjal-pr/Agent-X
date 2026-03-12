@@ -1,0 +1,23 @@
+{
+  "name": "pranjal-portfolio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Portfolio website with Express backend contact API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "check": "node --check server.js && node --check db.js",
+    "smoke": "node scripts/smoke-test.js",
+    "ci": "npm run check && npm run smoke"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "dotenv": "^17.3.1",
+    "express": "^4.21.2",
+    "nodemailer": "^8.0.2",
+    "pg": "^8.20.0"
+  }
+}

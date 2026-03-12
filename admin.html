@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portfolio Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Sora", sans-serif; background: #020408; color: #eef1f7; }
+    a { color: inherit; text-decoration: none; }
+    .page-bg { position: fixed; inset: 0; background:
+      radial-gradient(circle at 10% 0%, rgba(98, 117, 255, .12), transparent 28%),
+      radial-gradient(circle at 90% 15%, rgba(63, 179, 255, .1), transparent 24%),
+      linear-gradient(180deg, rgba(18, 24, 38, .72), rgba(2, 4, 8, .96) 220px),
+      #020408; pointer-events: none; }
+    .topbar { position: sticky; top: 0; z-index: 30; border-bottom: 1px solid rgba(255,255,255,.09); background: rgba(4, 7, 12, .9); backdrop-filter: blur(18px); }
+    .topbar-inner { width: min(1500px, 94%); margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0; }
+    .brand { display: flex; align-items: center; gap: 10px; font-size: 1.55rem; font-weight: 600; }
+    .brand-dot { width: 14px; height: 14px; border-radius: 999px; border: 2px solid currentColor; }
+    .nav { display: flex; align-items: center; gap: 18px; color: #d9dfec; font-size: .96rem; }
+    .nav a { opacity: .9; }
+    .nav a:hover { opacity: 1; }
+    .admin-badge { padding: 8px 14px; border-radius: 14px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04); font-size: .9rem; font-weight: 600; }
+    .shell { position: relative; width: min(1500px, 94%); margin: 0 auto; padding: 28px 0 48px; }
+    .hero-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 26px; }
+    .hero-copy h1 { margin: 0; font-size: clamp(2rem, 4vw, 3.4rem); line-height: 1.02; }
+    .hero-copy p { margin: 10px 0 0; max-width: 780px; color: #a7b0c3; font-size: 1.02rem; }
+    .hero-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .pill, .btn { border: 1px solid rgba(255,255,255,.12); border-radius: 14px; background: rgba(255,255,255,.04); color: #eef1f7; font: inherit; }
+    .pill { padding: 9px 14px; font-size: .9rem; font-weight: 600; }
+    .pill.ok { color: #d6ffe8; border-color: rgba(85, 214, 150, .25); background: rgba(49, 168, 109, .11); }
+    .btn { padding: 11px 16px; cursor: pointer; font-weight: 600; }
+    .btn.primary { border-color: rgba(109, 94, 252, .42); background: linear-gradient(140deg, rgba(109, 94, 252, .92), rgba(84, 115, 255, .88)); }
+    .btn:hover { background-color: rgba(255,255,255,.08); }
+    .btn.primary:hover { background: linear-gradient(140deg, rgba(109, 94, 252, 1), rgba(84, 115, 255, .95)); }
+    .btn.warn { color: #ffc1cd; border-color: rgba(255, 127, 153, .25); }
+    .btn:disabled { opacity: .65; cursor: not-allowed; }
+    .panel { border: 1px solid rgba(255,255,255,.09); border-radius: 24px; background: linear-gradient(180deg, rgba(17, 21, 31, .82), rgba(10, 13, 19, .95)); box-shadow: inset 0 1px 0 rgba(255,255,255,.03); padding: 18px; }
+    .stack { display: grid; gap: 18px; }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    .panel-head h2 { margin: 0; font-size: 1.08rem; text-transform: uppercase; letter-spacing: .03em; color: #f0f3fb; }
+    .panel-head p { margin: 6px 0 0; color: #8f98ab; font-size: .94rem; }
+    .grid { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid.triple { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    label { display: block; }
+    label span { display: block; margin: 0 0 8px; color: #8f98ab; font-size: .88rem; font-weight: 600; text-transform: uppercase; }
+    input, textarea { width: 100%; border: 1px solid rgba(255,255,255,.1); border-radius: 14px; background: #04070c; color: #f4f7ff; padding: 12px 14px; font: inherit; }
+    textarea { min-height: 108px; resize: vertical; }
+    input:focus, textarea:focus { outline: none; border-color: rgba(109, 94, 252, .55); box-shadow: 0 0 0 1px rgba(109, 94, 252, .2); }
+    .toggle-grid { display: grid; gap: 10px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .toggle-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 14px; border: 1px solid rgba(255,255,255,.1); border-radius: 16px; background: #04070c; }
+    .toggle-item strong { font-size: .98rem; }
+    .toggle-item input { width: 18px; height: 18px; }
+    .item-list { display: grid; gap: 12px; }
+    .item-card { border: 1px solid rgba(255,255,255,.08); border-radius: 18px; background: rgba(255,255,255,.02); padding: 14px; }
+    .item-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+    .item-card-head h3 { margin: 0; font-size: 1rem; }
+    .item-empty { border: 1px dashed rgba(255,255,255,.13); border-radius: 16px; padding: 14px; color: #818ba0; }
+    .login-panel { max-width: 620px; margin: 24px auto 0; }
+    .hidden { display: none !important; }
+    .status { min-height: 1.25em; margin: 14px 4px 0; color: #a7b0c3; }
+    @media (max-width: 1120px) { .toggle-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media (max-width: 940px) {
+      .topbar-inner, .hero-row, .panel-head, .item-card-head { flex-direction: column; align-items: flex-start; }
+      .nav { display: none; }
+      .grid, .grid.triple, .toggle-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-bg" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/"><span class="brand-dot"></span><span>Pranjal Roy Pradhan</span></a>
+      <nav class="nav" aria-label="Admin navigation">
+        <a href="/">Home</a>
+        <a href="/#projects">Projects</a>
+        <a href="/#skills">Skills</a>
+        <a href="/#about">About</a>
+        <a href="/#experience">Experience</a>
+        <a href="/#certifications">Certifications</a>
+        <a href="/#contact">Contact</a>
+        <span class="admin-badge">ADMIN</span>
+      </nav>
+    </div>
+  </header>
+
+  <main class="shell">
+    <div class="hero-row">
+      <div class="hero-copy">
+        <h1>Admin Console</h1>
+        <p>Edit visibility, section copy, hero details, projects, skills, and certifications from one place.</p>
+      </div>
+      <div class="hero-actions">
+        <span id="auth-pill" class="pill ok hidden">Authenticated</span>
+        <button id="save-top" class="btn primary hidden" type="button">Save Changes</button>
+        <a href="/" class="btn">Back to Portfolio</a>
+      </div>
+    </div>
+
+    <form id="login-form" class="panel login-panel">
+      <div class="panel-head">
+        <div>
+          <h2>Unlock Admin</h2>
+          <p>Use your admin password to edit live portfolio content.</p>
+        </div>
+      </div>
+      <label>
+        <span>Admin Password</span>
+        <input id="password" type="password" placeholder="Enter admin password" required />
+      </label>
+      <div style="margin-top:14px">
+        <button class="btn primary" type="submit">Login</button>
+      </div>
+    </form>
+
+    <section id="editor" class="stack hidden">
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Section Visibility</h2>
+            <p>Hide or show sections and matching navigation links on the portfolio.</p>
+          </div>
+          <button id="logout-visibility" class="btn warn" type="button">Lock Admin</button>
+        </div>
+        <div class="toggle-grid">
+          <label class="toggle-item"><strong>About</strong><input id="vis-about" type="checkbox" /></label>
+          <label class="toggle-item"><strong>Experience</strong><input id="vis-experience" type="checkbox" /></label>
+          <label class="toggle-item"><strong>Skills</strong><input id="vis-skills" type="checkbox" /></label>
+          <label class="toggle-item"><strong>Projects</strong><input id="vis-projects" type="checkbox" /></label>
+          <label class="toggle-item"><strong>Certifications</strong><input id="vis-certifications" type="checkbox" /></label>
+          <label class="toggle-item"><strong>Contact</strong><input id="vis-contact" type="checkbox" /></label>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Section Subtitles</h2>
+            <p>Short supporting copy shown below section headings.</p>
+          </div>
+        </div>
+        <div class="grid">
+          <label><span>About Subtitle</span><input id="subtitle-about" type="text" /></label>
+          <label><span>Experience Subtitle</span><input id="subtitle-experience" type="text" /></label>
+          <label><span>Skills Subtitle</span><input id="subtitle-skills" type="text" /></label>
+          <label><span>Projects Subtitle</span><input id="subtitle-projects" type="text" /></label>
+          <label><span>Certifications Subtitle</span><input id="subtitle-certifications" type="text" /></label>
+          <label><span>Contact Subtitle</span><input id="subtitle-contact" type="text" /></label>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Hero And Intro</h2>
+            <p>Main hero content and contact identity details.</p>
+          </div>
+        </div>
+        <div class="grid">
+          <label><span>Brand</span><input id="hero-brand" type="text" /></label>
+          <label><span>Name</span><input id="hero-name" type="text" /></label>
+          <label><span>Tagline</span><input id="hero-subtitle" type="text" /></label>
+          <label><span>Email</span><input id="contact-email" type="email" /></label>
+          <label><span>GitHub URL</span><input id="contact-github" type="url" /></label>
+          <label><span>LinkedIn URL</span><input id="contact-linkedin" type="url" /></label>
+        </div>
+        <label style="margin-top:12px"><span>About Intro</span><textarea id="about-intro"></textarea></label>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>About Stats</h2>
+            <p>Add or remove summary numbers shown under the About section.</p>
+          </div>
+          <button id="add-stat" class="btn" type="button">Add Stat</button>
+        </div>
+        <div id="stats-list" class="item-list"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Skills</h2>
+            <p>Each card is a skills group. Tags are comma separated.</p>
+          </div>
+          <button id="add-skill" class="btn" type="button">Add Skill Group</button>
+        </div>
+        <div id="skills-list" class="item-list"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Projects</h2>
+            <p>Manage the project carousel cards shown on the portfolio.</p>
+          </div>
+          <button id="add-project" class="btn" type="button">Add Project</button>
+        </div>
+        <div id="projects-list" class="item-list"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Certifications</h2>
+            <p>Manage certification cards and links.</p>
+          </div>
+          <button id="add-cert" class="btn" type="button">Add Certificate</button>
+        </div>
+        <div id="certs-list" class="item-list"></div>
+      </section>
+
+      <div class="hero-actions">
+        <button id="reload" class="btn" type="button">Reload</button>
+        <button id="save-bottom" class="btn primary" type="button">Save Changes</button>
+      </div>
+    </section>
+
+    <p id="status" class="status"></p>
+  </main>
+
+  <script>
+    const TOKEN_KEY = "portfolio_admin_token";
+    const $ = (id) => document.getElementById(id);
+    const loginForm = $("login-form");
+    const editor = $("editor");
+    const authPill = $("auth-pill");
+    const saveTop = $("save-top");
+    const saveBottom = $("save-bottom");
+    const statusEl = $("status");
+
+    const setStatus = (message, type = "info") => {
+      statusEl.textContent = message;
+      statusEl.style.color = type === "error" ? "#ff7f99" : type === "success" ? "#6df0c2" : "#a7b0c3";
+    };
+
+    const token = {
+      get: () => localStorage.getItem(TOKEN_KEY) || "",
+      set: (value) => localStorage.setItem(TOKEN_KEY, value),
+      clear: () => localStorage.removeItem(TOKEN_KEY),
+    };
+
+    const setView = (isAuthed) => {
+      loginForm.classList.toggle("hidden", isAuthed);
+      editor.classList.toggle("hidden", !isAuthed);
+      authPill.classList.toggle("hidden", !isAuthed);
+      saveTop.classList.toggle("hidden", !isAuthed);
+    };
+
+    const requestWithAuth = (url, options = {}) =>
+      fetch(url, {
+        ...options,
+        headers: {
+          ...(options.headers || {}),
+          Authorization: `Bearer ${token.get()}`,
+        },
+      });
+
+    const createCard = (title, body) => {
+      const node = document.createElement("article");
+      node.className = "item-card";
+      node.innerHTML = `<div class="item-card-head"><h3>${title}</h3><button class="btn warn remove-item" type="button">Remove</button></div>${body}`;
+      return node;
+    };
+
+    const ensureEmptyState = (container, message) => {
+      const hasCards = container.querySelector(".item-card");
+      const empty = container.querySelector(".item-empty");
+      if (!hasCards && !empty) {
+        const node = document.createElement("div");
+        node.className = "item-empty";
+        node.textContent = message;
+        container.appendChild(node);
+      }
+      if (hasCards && empty) empty.remove();
+    };
+
+    const bindRemove = (container, card, message) => {
+      card.querySelector(".remove-item").addEventListener("click", () => {
+        card.remove();
+        ensureEmptyState(container, message);
+      });
+    };
+
+    const statCard = (item = {}) => {
+      const node = createCard("Stat", `<div class="grid"><label><span>Value</span><input class="stat-value" type="text" /></label><label><span>Label</span><input class="stat-label" type="text" /></label></div>`);
+      node.querySelector(".stat-value").value = item.value || "";
+      node.querySelector(".stat-label").value = item.label || "";
+      return node;
+    };
+
+    const skillCard = (item = {}) => {
+      const node = createCard("Skill Group", `<div class="grid"><label><span>Title</span><input class="skill-title" type="text" /></label><label><span>Tags</span><input class="skill-tags" type="text" /></label></div><label style="margin-top:12px"><span>Description</span><textarea class="skill-description"></textarea></label>`);
+      node.querySelector(".skill-title").value = item.title || "";
+      node.querySelector(".skill-tags").value = Array.isArray(item.tags) ? item.tags.join(", ") : "";
+      node.querySelector(".skill-description").value = item.description || "";
+      return node;
+    };
+
+    const projectCard = (item = {}) => {
+      const node = createCard("Project", `<div class="grid triple"><label><span>Title</span><input class="project-title" type="text" /></label><label><span>Stars</span><input class="project-stars" type="number" min="0" max="5" step="1" /></label><label><span>Icon</span><input class="project-emoji" type="text" /></label></div><div class="grid" style="margin-top:12px"><label><span>Button Label</span><input class="project-cta" type="text" /></label><label><span>Project URL</span><input class="project-href" type="url" /></label></div><label style="margin-top:12px"><span>Description</span><textarea class="project-description"></textarea></label>`);
+      node.querySelector(".project-title").value = item.title || "";
+      node.querySelector(".project-stars").value = item.stars ?? "";
+      node.querySelector(".project-emoji").value = item.emoji || "";
+      node.querySelector(".project-cta").value = item.cta || "";
+      node.querySelector(".project-href").value = item.href && item.href !== "#" ? item.href : "";
+      node.querySelector(".project-description").value = item.description || "";
+      return node;
+    };
+
+    const certCard = (item = {}) => {
+      const node = createCard("Certificate", `<div class="grid"><label><span>Year</span><input class="cert-year" type="text" /></label><label><span>Issuer</span><input class="cert-org" type="text" /></label></div><div class="grid" style="margin-top:12px"><label><span>Title</span><input class="cert-title" type="text" /></label><label><span>Credential URL</span><input class="cert-href" type="url" /></label></div>`);
+      node.querySelector(".cert-year").value = item.year || "";
+      node.querySelector(".cert-org").value = item.org || "";
+      node.querySelector(".cert-title").value = item.title || "";
+      node.querySelector(".cert-href").value = item.href && item.href !== "#" ? item.href : "";
+      return node;
+    };
+
+    const renderList = (container, items, factory, emptyMessage) => {
+      container.innerHTML = "";
+      items.forEach((item) => {
+        const node = factory(item);
+        bindRemove(container, node, emptyMessage);
+        container.appendChild(node);
+      });
+      ensureEmptyState(container, emptyMessage);
+    };
+
+    const addItem = (container, factory, emptyMessage) => {
+      const node = factory();
+      bindRemove(container, node, emptyMessage);
+      const empty = container.querySelector(".item-empty");
+      if (empty) empty.remove();
+      container.appendChild(node);
+    };
+
+    const defaultContent = () => ({
+      visibility: { about: true, experience: true, skills: true, projects: true, certifications: true, contact: true },
+      subtitles: {
+        about: "My Introduction",
+        experience: "My journey in the academic & professional front",
+        skills: "My toolkit for building machine learning models and shipping them into real products.",
+        projects: "My independent projects & contributions",
+        certifications: "Verified learning milestones in machine learning, AI, and software engineering.",
+        contact: "Send a message and I will get back to you soon.",
+      },
+      hero: { brand: "", name: "", subtitle: "" },
+      about: { intro: "", stats: [] },
+      skills: { subtitle: "", cards: [] },
+      projects: { subtitle: "", items: [] },
+      certifications: { subtitle: "", items: [] },
+      contact: { email: "", github: "", linkedin: "" },
+    });
+
+    const renderEditor = (incoming) => {
+      const content = { ...defaultContent(), ...incoming };
+      content.visibility = { ...defaultContent().visibility, ...(incoming?.visibility || {}) };
+      content.subtitles = { ...defaultContent().subtitles, ...(incoming?.subtitles || {}) };
+
+      $("vis-about").checked = content.visibility.about !== false;
+      $("vis-experience").checked = content.visibility.experience !== false;
+      $("vis-skills").checked = content.visibility.skills !== false;
+      $("vis-projects").checked = content.visibility.projects !== false;
+      $("vis-certifications").checked = content.visibility.certifications !== false;
+      $("vis-contact").checked = content.visibility.contact !== false;
+
+      $("subtitle-about").value = content.subtitles.about || "";
+      $("subtitle-experience").value = content.subtitles.experience || "";
+      $("subtitle-skills").value = content.subtitles.skills || content.skills?.subtitle || "";
+      $("subtitle-projects").value = content.subtitles.projects || content.projects?.subtitle || "";
+      $("subtitle-certifications").value = content.subtitles.certifications || content.certifications?.subtitle || "";
+      $("subtitle-contact").value = content.subtitles.contact || "";
+
+      $("hero-brand").value = content.hero?.brand || "";
+      $("hero-name").value = content.hero?.name || "";
+      $("hero-subtitle").value = content.hero?.subtitle || "";
+      $("about-intro").value = content.about?.intro || "";
+      $("contact-email").value = content.contact?.email || "";
+      $("contact-github").value = content.contact?.github || "";
+      $("contact-linkedin").value = content.contact?.linkedin || "";
+
+      renderList($("stats-list"), Array.isArray(content.about?.stats) ? content.about.stats : [], statCard, "No stats yet. Click Add Stat.");
+      renderList($("skills-list"), Array.isArray(content.skills?.cards) ? content.skills.cards : [], skillCard, "No skill groups yet. Click Add Skill Group.");
+      renderList($("projects-list"), Array.isArray(content.projects?.items) ? content.projects.items : [], projectCard, "No projects yet. Click Add Project.");
+      renderList($("certs-list"), Array.isArray(content.certifications?.items) ? content.certifications.items : [], certCard, "No certificates yet. Click Add Certificate.");
+    };
+
+    const rows = (id) => Array.from($(id).querySelectorAll(".item-card"));
+
+    const buildPayload = () => {
+      const subtitles = {
+        about: $("subtitle-about").value.trim(),
+        experience: $("subtitle-experience").value.trim(),
+        skills: $("subtitle-skills").value.trim(),
+        projects: $("subtitle-projects").value.trim(),
+        certifications: $("subtitle-certifications").value.trim(),
+        contact: $("subtitle-contact").value.trim(),
+      };
+
+      return {
+        visibility: {
+          about: $("vis-about").checked,
+          experience: $("vis-experience").checked,
+          skills: $("vis-skills").checked,
+          projects: $("vis-projects").checked,
+          certifications: $("vis-certifications").checked,
+          contact: $("vis-contact").checked,
+        },
+        subtitles,
+        hero: {
+          brand: $("hero-brand").value.trim(),
+          name: $("hero-name").value.trim(),
+          subtitle: $("hero-subtitle").value.trim(),
+        },
+        about: {
+          intro: $("about-intro").value.trim(),
+          stats: rows("stats-list")
+            .map((card) => ({
+              value: card.querySelector(".stat-value").value.trim(),
+              label: card.querySelector(".stat-label").value.trim(),
+            }))
+            .filter((item) => item.value || item.label),
+        },
+        skills: {
+          subtitle: subtitles.skills,
+          cards: rows("skills-list")
+            .map((card) => ({
+              title: card.querySelector(".skill-title").value.trim(),
+              description: card.querySelector(".skill-description").value.trim(),
+              tags: card.querySelector(".skill-tags").value.split(",").map((tag) => tag.trim()).filter(Boolean),
+            }))
+            .filter((item) => item.title || item.description || item.tags.length > 0),
+        },
+        projects: {
+          subtitle: subtitles.projects,
+          items: rows("projects-list")
+            .map((card) => ({
+              title: card.querySelector(".project-title").value.trim(),
+              description: card.querySelector(".project-description").value.trim(),
+              stars: Number(card.querySelector(".project-stars").value || 0),
+              emoji: card.querySelector(".project-emoji").value.trim(),
+              cta: card.querySelector(".project-cta").value.trim(),
+              href: card.querySelector(".project-href").value.trim() || "#",
+            }))
+            .filter((item) => item.title || item.description || item.emoji || item.href !== "#"),
+        },
+        certifications: {
+          subtitle: subtitles.certifications,
+          items: rows("certs-list")
+            .map((card) => ({
+              year: card.querySelector(".cert-year").value.trim(),
+              title: card.querySelector(".cert-title").value.trim(),
+              org: card.querySelector(".cert-org").value.trim(),
+              href: card.querySelector(".cert-href").value.trim() || "#",
+            }))
+            .filter((item) => item.year || item.title || item.org || item.href !== "#"),
+        },
+        contact: {
+          email: $("contact-email").value.trim(),
+          github: $("contact-github").value.trim(),
+          linkedin: $("contact-linkedin").value.trim(),
+        },
+      };
+    };
+
+    const handleAuthFailure = () => {
+      token.clear();
+      setView(false);
+      setStatus("Session expired. Please login again.", "error");
+    };
+
+    const loadContent = async () => {
+      setStatus("Loading content...");
+      try {
+        const response = await requestWithAuth("/api/admin/content", { cache: "no-store" });
+        const data = await response.json();
+        if (response.status === 401) return handleAuthFailure();
+        if (!response.ok) throw new Error(data.message || "Unable to load content.");
+        renderEditor(data.content);
+        setStatus("Content loaded.", "success");
+      } catch (error) {
+        setStatus(error.message || "Failed to load content.", "error");
+      }
+    };
+
+    const saveContent = async () => {
+      saveTop.disabled = true;
+      saveBottom.disabled = true;
+      setStatus("Saving changes...");
+      try {
+        const response = await requestWithAuth("/api/admin/content", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: buildPayload() }),
+        });
+        const data = await response.json();
+        if (response.status === 401) return handleAuthFailure();
+        if (!response.ok) throw new Error(data.message || "Save failed.");
+        renderEditor(data.content);
+        setStatus("Changes saved successfully.", "success");
+      } catch (error) {
+        setStatus(error.message || "Failed to save changes.", "error");
+      } finally {
+        saveTop.disabled = false;
+        saveBottom.disabled = false;
+      }
+    };
+
+    loginForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      setStatus("Signing in...");
+      try {
+        const response = await fetch("/api/admin/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password: $("password").value.trim() }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || "Login failed.");
+        token.set(data.token);
+        $("password").value = "";
+        setView(true);
+        setStatus("Login successful.", "success");
+        await loadContent();
+      } catch (error) {
+        setStatus(error.message || "Login failed.", "error");
+      }
+    });
+
+    $("reload").addEventListener("click", loadContent);
+    $("logout-visibility").addEventListener("click", () => { token.clear(); setView(false); setStatus("Logged out."); });
+    saveTop.addEventListener("click", saveContent);
+    saveBottom.addEventListener("click", saveContent);
+    $("add-stat").addEventListener("click", () => addItem($("stats-list"), statCard, "No stats yet. Click Add Stat."));
+    $("add-skill").addEventListener("click", () => addItem($("skills-list"), skillCard, "No skill groups yet. Click Add Skill Group."));
+    $("add-project").addEventListener("click", () => addItem($("projects-list"), projectCard, "No projects yet. Click Add Project."));
+    $("add-cert").addEventListener("click", () => addItem($("certs-list"), certCard, "No certificates yet. Click Add Certificate."));
+
+    if (token.get()) {
+      setView(true);
+      loadContent();
+    } else {
+      setView(false);
+    }
+  </script>
+</body>
+</html>
