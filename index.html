@@ -439,6 +439,116 @@
         justify-content: center;
         margin-top: 0;
       }
+      .contact-section {
+        padding-top: 5rem;
+        padding-bottom: 6rem;
+      }
+      .contact-card {
+        --contact-surface: #090c12;
+        --contact-field: #04070c;
+        --contact-border: rgba(255, 255, 255, 0.14);
+        --contact-text: #f2f3f8;
+        --contact-muted: #98a3b8;
+        margin-top: 2.25rem;
+        border: 1px solid var(--contact-border);
+        border-radius: 1.9rem;
+        padding: clamp(1.4rem, 3vw, 2rem);
+        background:
+          radial-gradient(circle at 85% 18%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 34%),
+          linear-gradient(160deg, color-mix(in srgb, var(--contact-surface) 92%, #121826 8%), var(--contact-surface));
+        box-shadow: var(--shadow);
+      }
+      .contact-form-grid {
+        display: grid;
+        gap: 1.45rem;
+      }
+      .contact-field {
+        display: grid;
+        gap: 0.7rem;
+      }
+      .contact-label {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--contact-text);
+      }
+      .contact-input,
+      .contact-textarea {
+        width: 100%;
+        border-radius: 1.15rem;
+        border: 1px solid var(--contact-border);
+        background: var(--contact-field);
+        color: var(--contact-text);
+        outline: none;
+        transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+      }
+      .contact-input {
+        min-height: 3.8rem;
+        padding: 0 1.15rem;
+        font-size: 1rem;
+      }
+      .contact-textarea {
+        min-height: 11rem;
+        padding: 1rem 1.15rem;
+        font-size: 1rem;
+        line-height: 1.65;
+        resize: vertical;
+      }
+      .contact-input::placeholder,
+      .contact-textarea::placeholder {
+        color: var(--contact-muted);
+      }
+      .contact-input:focus,
+      .contact-textarea:focus {
+        border-color: color-mix(in srgb, var(--accent) 70%, var(--contact-border));
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);
+      }
+      .contact-submit {
+        min-height: 3.5rem;
+        width: 100%;
+        border: 0;
+        border-radius: 1.1rem;
+        font-size: 1.05rem;
+        font-weight: 700;
+        background: #d6dbe3;
+        color: #10141d;
+      }
+      .contact-submit:hover {
+        background: #edf1f6;
+      }
+      .contact-meta {
+        margin-top: 1rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.85rem;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .contact-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.8rem;
+      }
+      .contact-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 2.8rem;
+        border-radius: 999px;
+        border: 1px solid var(--contact-border);
+        padding: 0 1rem;
+        color: var(--contact-text);
+        background: rgba(255, 255, 255, 0.04);
+        transition: transform 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+      }
+      .contact-link:hover {
+        transform: translateY(-1px);
+        border-color: color-mix(in srgb, var(--accent) 44%, var(--contact-border));
+        background: color-mix(in srgb, var(--accent-soft) 34%, rgba(255, 255, 255, 0.04));
+      }
+      .contact-status {
+        font-size: 0.94rem;
+        color: var(--contact-muted);
+      }
       .cert-grid {
         margin-top: 2rem;
         display: grid;
@@ -631,6 +741,12 @@
         }
         .projects-gallery {
           grid-template-columns: 1fr;
+        }
+      }
+      @media (max-width: 760px) {
+        .contact-meta {
+          flex-direction: column;
+          align-items: flex-start;
         }
       }
       .reveal {
@@ -1311,47 +1427,37 @@
         </div>
       </section>
 
-      <section id="contact" class="anchor-section py-14 pb-24" data-section-block="contact">
-        <div class="reveal mb-6">
-          <p class="font-mono text-xs uppercase tracking-[0.14em]" style="color: var(--muted)">Contact</p>
-          <h2 class="mt-2 text-4xl font-semibold">Contact</h2>
-          <p id="contact-subtitle" class="mt-3 max-w-2xl text-lg" style="color: var(--muted)">Send a message and I will get back to you soon.</p>
+      <section id="contact" class="anchor-section contact-section" data-section-block="contact">
+        <div class="reveal">
+          <h2 class="text-5xl font-semibold sm:text-6xl">Contact</h2>
+          <p id="contact-subtitle" class="mt-4 max-w-3xl text-xl" style="color: var(--muted)">Send a message and I will get back to you soon.</p>
         </div>
-        <div class="grid gap-5 lg:grid-cols-2">
-          <div class="surface reveal rounded-3xl p-6 sm:p-7">
-            <h3 class="text-2xl font-semibold">Send a message</h3>
-            <p class="mt-2 text-sm" style="color: var(--muted)">
-              This form posts to the backend endpoint
-              <code class="rounded px-1 py-0.5" style="background: var(--accent-soft); color: var(--accent)">/api/contact</code>.
-            </p>
-            <form id="contact-form" class="mt-6 space-y-4" novalidate>
-              <div>
-                <label for="name" class="mb-2 block text-sm" style="color: var(--muted)">Name</label>
-                <input id="name" name="name" type="text" required class="w-full rounded-xl border px-4 py-3 text-sm outline-none" style="border-color: var(--line); background: var(--card); color: var(--text)" placeholder="Your name" />
-              </div>
-              <div>
-                <label for="email" class="mb-2 block text-sm" style="color: var(--muted)">Email</label>
-                <input id="email" name="email" type="email" required class="w-full rounded-xl border px-4 py-3 text-sm outline-none" style="border-color: var(--line); background: var(--card); color: var(--text)" placeholder="you@example.com" />
-              </div>
-              <div>
-                <label for="message" class="mb-2 block text-sm" style="color: var(--muted)">Message</label>
-                <textarea id="message" name="message" rows="4" required class="w-full rounded-xl border px-4 py-3 text-sm outline-none" style="border-color: var(--line); background: var(--card); color: var(--text)" placeholder="Tell me about your idea..."></textarea>
-              </div>
-              <button type="submit" class="btn-primary w-full rounded-xl px-5 py-3 text-base font-semibold">Send Message</button>
-              <p id="form-status" class="text-sm" style="color: var(--muted)" role="status" aria-live="polite"></p>
-            </form>
-          </div>
-          <aside class="surface reveal rounded-3xl p-6 sm:p-7">
-            <h3 class="text-2xl font-semibold">Online Profiles</h3>
-            <p class="mt-2 text-sm" style="color: var(--muted)">Open to internships, collaborations, and project opportunities.</p>
-            <div class="mt-6 space-y-3">
-              <!-- Replace the href below with your real GitHub profile URL -->
-              <a id="contact-github-link" href="https://github.com/your-username" target="_blank" rel="noopener noreferrer" class="block rounded-xl border px-4 py-3 text-sm font-medium" style="border-color: var(--line); color: var(--text)">GitHub Profile</a>
-              <!-- Replace the href below with your real LinkedIn profile URL -->
-              <a id="contact-linkedin-link" href="https://linkedin.com/in/your-username" target="_blank" rel="noopener noreferrer" class="block rounded-xl border px-4 py-3 text-sm font-medium" style="border-color: var(--line); color: var(--text)">LinkedIn Profile</a>
-              <a id="contact-email-link" href="mailto:pranjal@example.com" class="block rounded-xl border px-4 py-3 text-sm font-medium" style="border-color: var(--line); color: var(--text)">pranjal@example.com</a>
+        <div class="contact-card reveal">
+          <form id="contact-form" class="contact-form-grid" novalidate>
+            <div class="contact-field">
+              <label for="name" class="contact-label">Name</label>
+              <input id="name" name="name" type="text" required class="contact-input" placeholder="Your name" />
             </div>
-          </aside>
+            <div class="contact-field">
+              <label for="email" class="contact-label">Email</label>
+              <input id="email" name="email" type="email" required class="contact-input" placeholder="you@example.com" />
+            </div>
+            <div class="contact-field">
+              <label for="message" class="contact-label">Message</label>
+              <textarea id="message" name="message" required class="contact-textarea" placeholder="Tell me about what you want to build or analyze."></textarea>
+            </div>
+            <button type="submit" class="btn-primary contact-submit">Send Message</button>
+            <div class="contact-meta">
+              <p id="form-status" class="contact-status" role="status" aria-live="polite"></p>
+              <div class="contact-links">
+                <!-- Replace the href below with your real GitHub profile URL -->
+                <a id="contact-github-link" href="https://github.com/your-username" target="_blank" rel="noopener noreferrer" class="contact-link">GitHub</a>
+                <!-- Replace the href below with your real LinkedIn profile URL -->
+                <a id="contact-linkedin-link" href="https://linkedin.com/in/your-username" target="_blank" rel="noopener noreferrer" class="contact-link">LinkedIn</a>
+                <a id="contact-email-link" href="mailto:pranjal@example.com" class="contact-link">pranjal@example.com</a>
+              </div>
+            </div>
+          </form>
         </div>
       </section>
     </main>
