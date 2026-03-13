@@ -1972,7 +1972,7 @@
           if (!response.ok) throw new Error(data.message || "Failed to send message.");
 
           statusText.textContent = data.message || "Message sent successfully.";
-          statusText.style.color = "var(--accent)";
+          statusText.style.color = data.mode === "smtp" ? "var(--accent)" : "#e8b14a";
           contactForm.reset();
         } catch (error) {
           statusText.textContent = error.message || "Something went wrong. Please try again.";

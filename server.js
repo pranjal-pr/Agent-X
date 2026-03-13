@@ -18,6 +18,7 @@ const ADMIN_SESSION_SECRET = String(
 );
 const ADMIN_TOKEN_TTL_MS = 1000 * 60 * 60 * 12;
 const isProduction = String(process.env.NODE_ENV || "").trim() === "production";
+const SMTP_TIMEOUT_MS = Math.max(3000, Math.min(30000, Number(process.env.SMTP_TIMEOUT_MS) || 12000));
 
 const DEFAULT_CONTENT = {
   visibility: {
@@ -455,6 +456,9 @@ function getTransporter() {
     host: SMTP_HOST,
     port: Number(SMTP_PORT),
     secure: String(SMTP_SECURE).toLowerCase() === "true",
+    connectionTimeout: SMTP_TIMEOUT_MS,
+    greetingTimeout: SMTP_TIMEOUT_MS,
+    socketTimeout: SMTP_TIMEOUT_MS,
     auth: {
       user: SMTP_USER,
       pass: SMTP_PASS,
@@ -474,17 +478,26 @@ async function deliverMessage({ name, email, message }) {
     return {
       mode: "log",
       message:
-        "Message received. Email delivery is not configured yet on the server.",
+        "Message saved. Email delivery is not configured yet on the server.",
     };
   }
 
-  await transporter.sendMail({
-    from: fromEmail,
-    to: toEmail,
-    replyTo: email,
-    subject: `Portfolio Contact: ${name}`,
-    text: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
-  });
+  try {
+    await transporter.sendMail({
+      from: fromEmail,
+      to: toEmail,
+      replyTo: email,
+      subject: `Portfolio Contact: ${name}`,
+      text: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
+    });
+  } catch (error) {
+    console.error("SMTP delivery failed:", error);
+    return {
+      mode: "stored",
+      message:
+        "Message saved, but email delivery failed on the server. Check SMTP settings in Render logs.",
+    };
+  }
 
   return {
     mode: "smtp",
@@ -585,22 +598,7 @@ app.post("/api/contact", async (req, res) => {
       });
     }
 
-    let result;
-    try {
-      result = await deliverMessage({ name, email, message });
-    } catch (error) {
-      try {
-        await persistContactMessage({
-          name,
-          email,
-          message,
-          deliveryMode: "error",
-        });
-      } catch (dbError) {
-        console.error("Failed to persist failed contact message:", dbError);
-      }
-      throw error;
-    }
+    const result = await deliverMessage({ name, email, message });
 
     await persistContactMessage({
       name,
@@ -608,7 +606,9 @@ app.post("/api/contact", async (req, res) => {
       message,
       deliveryMode: result.mode,
     });
-    return res.status(200).json({
+
+    const statusCode = result.mode === "smtp" ? 200 : 202;
+    return res.status(statusCode).json({
       ok: true,
       mode: result.mode,
       message: result.message,
