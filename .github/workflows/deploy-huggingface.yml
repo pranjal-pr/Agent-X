@@ -28,20 +28,22 @@ jobs:
           test -n "$HF_TOKEN"
           test -n "$HF_SPACE_REPO"
 
-      - name: Prepare Hugging Face Space README
-        run: cp README.space.md README.md
-
-      - name: Create deployment commit for Space metadata
-        run: |
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-          git add README.md
-          git commit -m "Prepare Hugging Face Space metadata"
-
-      - name: Push to Hugging Face Space
+      - name: Sync and push to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           HF_SPACE_REPO: ${{ secrets.HF_SPACE_REPO }}
         run: |
           HF_USERNAME="${HF_SPACE_REPO%%/*}"
-          git push --force "https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE_REPO}" HEAD:main
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git clone "https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE_REPO}" space_repo
+          rsync -a --delete --exclude '.git/' --exclude '.github/' ./ space_repo/
+          cp README.space.md space_repo/README.md
+          cd space_repo
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No deployment changes detected."
+            exit 0
+          fi
+          git commit -m "Deploy from GitHub Actions"
+          git push origin main
