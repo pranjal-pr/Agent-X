@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
 from datetime import datetime, timezone
 from typing import Any
 
@@ -13,6 +14,7 @@ from models import NewsDigest, NewsItem, TechnicalAnalysis
 
 MARKET_DATA_TIMEOUT_SECONDS = 8
 NEWS_SEARCH_TIMEOUT_SECONDS = 8
+MAX_NEWS_ITEMS = 4
 
 
 class TickerInput(BaseModel):
@@ -69,9 +71,9 @@ class YFinanceTechnicalsTool(BaseTool):
     )
     args_schema: type[BaseModel] = TickerInput
 
-    def _run(self, ticker: str) -> str:
-        symbol = ticker.strip().upper()
-        history = yf.download(
+    @staticmethod
+    def _download_history(symbol: str) -> pd.DataFrame:
+        return yf.download(
             symbol,
             period="6mo",
             interval="1d",
@@ -81,6 +83,17 @@ class YFinanceTechnicalsTool(BaseTool):
             timeout=MARKET_DATA_TIMEOUT_SECONDS,
             multi_level_index=False,
         )
+
+    def _run(self, ticker: str) -> str:
+        symbol = ticker.strip().upper()
+        executor = ThreadPoolExecutor(max_workers=1)
+        future = executor.submit(self._download_history, symbol)
+        try:
+            history = future.result(timeout=MARKET_DATA_TIMEOUT_SECONDS + 1)
+        except FutureTimeoutError as exc:
+            raise ValueError(f"Market data request timed out for ticker '{symbol}'.") from exc
+        finally:
+            executor.shutdown(wait=False, cancel_futures=True)
         if history.empty:
             raise ValueError(f"No market data returned for ticker '{symbol}'.")
 
@@ -123,38 +136,49 @@ class DuckDuckGoNewsTool(BaseTool):
     )
     args_schema: type[BaseModel] = TickerInput
 
+    @staticmethod
+    def _search_news(query: str) -> list[dict[str, Any]]:
+        with DDGS(timeout=NEWS_SEARCH_TIMEOUT_SECONDS) as ddgs:
+            results = list(
+                ddgs.news(
+                    keywords=query,
+                    region="wt-wt",
+                    safesearch="moderate",
+                    timelimit="d",
+                    max_results=MAX_NEWS_ITEMS,
+                )
+            )
+
+            if not results:
+                results = list(
+                    ddgs.text(
+                        keywords=query,
+                        region="wt-wt",
+                        safesearch="moderate",
+                        timelimit="d",
+                        max_results=MAX_NEWS_ITEMS,
+                    )
+                )
+        return results
+
     def _run(self, ticker: str) -> str:
         symbol = ticker.strip().upper()
         query = f"{symbol} stock market news"
         items: list[NewsItem] = []
         results: list[dict[str, Any]] = []
 
+        executor = ThreadPoolExecutor(max_workers=1)
         try:
-            with DDGS(timeout=NEWS_SEARCH_TIMEOUT_SECONDS) as ddgs:
-                results = list(
-                    ddgs.news(
-                        keywords=query,
-                        region="wt-wt",
-                        safesearch="moderate",
-                        timelimit="d",
-                        max_results=6,
-                    )
-                )
-
-                if not results:
-                    results = list(
-                        ddgs.text(
-                            keywords=query,
-                            region="wt-wt",
-                            safesearch="moderate",
-                            timelimit="d",
-                            max_results=6,
-                        )
-                    )
+            future = executor.submit(self._search_news, query)
+            results = future.result(timeout=NEWS_SEARCH_TIMEOUT_SECONDS + 1)
+        except FutureTimeoutError:
+            results = []
         except Exception:
             results = []
+        finally:
+            executor.shutdown(wait=False, cancel_futures=True)
 
-        for result in results[:6]:
+        for result in results[:MAX_NEWS_ITEMS]:
             url = result.get("url") or result.get("href")
             title = result.get("title")
             if not url or not title:

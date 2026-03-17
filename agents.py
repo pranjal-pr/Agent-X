@@ -23,7 +23,7 @@ def build_groq_llm(model_name: str | None = None) -> LLM:
         model=resolved_model,
         api_key=api_key,
         temperature=0.1,
-        max_tokens=1200,
+        max_tokens=900,
         timeout=8,
     )
 
@@ -53,7 +53,7 @@ def build_agents(llm: LLM) -> AgentBundle:
         tools=[YFinanceTechnicalsTool()],
         verbose=False,
         allow_delegation=False,
-        max_iter=2,
+        max_iter=1,
     )
 
     news_sentinel = Agent(
@@ -70,7 +70,7 @@ def build_agents(llm: LLM) -> AgentBundle:
         tools=[DuckDuckGoNewsTool()],
         verbose=False,
         allow_delegation=False,
-        max_iter=2,
+        max_iter=1,
     )
 
     quantitative_strategist = Agent(
@@ -86,7 +86,7 @@ def build_agents(llm: LLM) -> AgentBundle:
         llm=llm,
         verbose=False,
         allow_delegation=False,
-        max_iter=2,
+        max_iter=1,
     )
 
     return AgentBundle(
