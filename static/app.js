@@ -144,7 +144,7 @@ function renderAttachments() {
 
     const meta = document.createElement("span");
     meta.className = "attachment-meta";
-    meta.textContent = `${attachment.kind === "photo" ? "Photo" : "File"} · ${formatBytes(attachment.file.size)}`;
+    meta.textContent = `${attachment.kind === "photo" ? "Photo" : "File"} - ${formatBytes(attachment.file.size)}`;
 
     body.append(name, meta);
 
