@@ -3,6 +3,7 @@ const tickerInput = document.getElementById("ticker");
 const submitButton = document.getElementById("submit-button");
 const themeToggle = document.getElementById("theme-toggle");
 const themeToggleText = document.getElementById("theme-toggle-text");
+const backgroundPresetButtons = Array.from(document.querySelectorAll("[data-background-preset]"));
 const resultsSection = document.getElementById("results");
 const statusBadge = document.getElementById("status-badge");
 const latencyPill = document.getElementById("latency-pill");
@@ -23,6 +24,8 @@ const newsSummaryEl = document.getElementById("news-summary");
 const newsList = document.getElementById("news-list");
 const actionPlanEl = document.getElementById("action-plan");
 const THEME_STORAGE_KEY = "stock-syndicate-theme";
+const BACKGROUND_STORAGE_KEY = "stock-syndicate-background";
+const DEFAULT_BACKGROUND_PRESET = "aurora";
 
 function getPreferredTheme() {
   try {
@@ -58,6 +61,33 @@ setTheme(document.documentElement.dataset.theme || getPreferredTheme());
 themeToggle.addEventListener("click", () => {
   const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
   setTheme(nextTheme);
+});
+
+function syncBackgroundPresetButtons() {
+  const activePreset = document.documentElement.dataset.background || DEFAULT_BACKGROUND_PRESET;
+  backgroundPresetButtons.forEach((button) => {
+    const isActive = button.dataset.backgroundPreset === activePreset;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-pressed", String(isActive));
+  });
+}
+
+function setBackgroundPreset(preset) {
+  document.documentElement.dataset.background = preset;
+  try {
+    localStorage.setItem(BACKGROUND_STORAGE_KEY, preset);
+  } catch {
+    // Ignore storage access failures and keep the preset for this session only.
+  }
+  syncBackgroundPresetButtons();
+}
+
+setBackgroundPreset(document.documentElement.dataset.background || DEFAULT_BACKGROUND_PRESET);
+
+backgroundPresetButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    setBackgroundPreset(button.dataset.backgroundPreset || DEFAULT_BACKGROUND_PRESET);
+  });
 });
 
 function setStatus(label, kind) {

@@ -30,6 +30,10 @@
   --button-shadow: 0 12px 28px rgba(14, 26, 36, 0.2);
   --focus-ring: rgba(2, 115, 94, 0.24);
   --ring-core: rgba(255, 248, 233, 1);
+  --mesh-line: rgba(19, 35, 47, 0.06);
+  --mesh-opacity: 0.45;
+  --wash-one: rgba(255, 255, 255, 0.18);
+  --wash-two: rgba(2, 115, 94, 0.12);
 }
 
 html[data-theme="dark"] {
@@ -61,6 +65,62 @@ html[data-theme="dark"] {
   --button-shadow: 0 14px 30px rgba(0, 0, 0, 0.3);
   --focus-ring: rgba(89, 209, 182, 0.3);
   --ring-core: rgba(9, 18, 27, 1);
+  --mesh-line: rgba(235, 244, 248, 0.08);
+  --mesh-opacity: 0.4;
+  --wash-one: rgba(255, 255, 255, 0.04);
+  --wash-two: rgba(89, 209, 182, 0.08);
+}
+
+html[data-background="terminal"] {
+  --body-glow-1: rgba(92, 175, 255, 0.14);
+  --body-glow-2: rgba(89, 209, 182, 0.14);
+  --body-start: #eef4f8;
+  --body-end: #dde8ef;
+  --backdrop-one: rgba(92, 175, 255, 0.12);
+  --backdrop-two: rgba(89, 209, 182, 0.12);
+  --mesh-line: rgba(40, 76, 112, 0.08);
+  --mesh-opacity: 0.78;
+  --wash-one: rgba(92, 175, 255, 0.12);
+  --wash-two: rgba(89, 209, 182, 0.08);
+}
+
+html[data-theme="dark"][data-background="terminal"] {
+  --body-glow-1: rgba(92, 175, 255, 0.12);
+  --body-glow-2: rgba(89, 209, 182, 0.14);
+  --body-start: #09121d;
+  --body-end: #142434;
+  --backdrop-one: rgba(92, 175, 255, 0.16);
+  --backdrop-two: rgba(89, 209, 182, 0.14);
+  --mesh-line: rgba(178, 214, 240, 0.1);
+  --mesh-opacity: 0.68;
+  --wash-one: rgba(92, 175, 255, 0.08);
+  --wash-two: rgba(89, 209, 182, 0.08);
+}
+
+html[data-background="sunset"] {
+  --body-glow-1: rgba(255, 122, 89, 0.18);
+  --body-glow-2: rgba(246, 185, 108, 0.18);
+  --body-start: #fbefe5;
+  --body-end: #f0ddd1;
+  --backdrop-one: rgba(255, 122, 89, 0.14);
+  --backdrop-two: rgba(246, 185, 108, 0.16);
+  --mesh-line: rgba(125, 54, 33, 0.06);
+  --mesh-opacity: 0.3;
+  --wash-one: rgba(255, 122, 89, 0.12);
+  --wash-two: rgba(246, 185, 108, 0.1);
+}
+
+html[data-theme="dark"][data-background="sunset"] {
+  --body-glow-1: rgba(255, 122, 89, 0.16);
+  --body-glow-2: rgba(246, 185, 108, 0.16);
+  --body-start: #1a1110;
+  --body-end: #261819;
+  --backdrop-one: rgba(255, 122, 89, 0.16);
+  --backdrop-two: rgba(246, 185, 108, 0.14);
+  --mesh-line: rgba(255, 207, 184, 0.06);
+  --mesh-opacity: 0.26;
+  --wash-one: rgba(255, 122, 89, 0.08);
+  --wash-two: rgba(246, 185, 108, 0.08);
 }
 
 * {
@@ -82,6 +142,30 @@ body {
     linear-gradient(180deg, var(--body-start) 0%, var(--body-end) 100%);
   overflow-x: hidden;
   transition: background 220ms ease, color 220ms ease;
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+body::before {
+  background-image:
+    linear-gradient(to right, var(--mesh-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--mesh-line) 1px, transparent 1px);
+  background-size: 120px 120px;
+  mask-image: radial-gradient(circle at center, rgba(0, 0, 0, 0.95), transparent 92%);
+  opacity: var(--mesh-opacity);
+}
+
+body::after {
+  background:
+    radial-gradient(circle at 18% 24%, var(--wash-one), transparent 34%),
+    radial-gradient(circle at 78% 28%, var(--wash-two), transparent 30%);
 }
 
 .backdrop {
@@ -263,6 +347,27 @@ h1 {
   padding: 1.4rem 1.5rem;
 }
 
+.design-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.design-label {
+  font-family: "Aptos Display", "Trebuchet MS", "Gill Sans", sans-serif;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.background-picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
 .analyze-form {
   display: grid;
   gap: 0.75rem;
@@ -328,6 +433,19 @@ button {
   background: var(--surface-strong);
   color: var(--text);
   border: 1px solid var(--outline-soft);
+}
+
+.design-chip {
+  padding: 0.68rem 0.95rem;
+  background: var(--pill-bg);
+  color: var(--text);
+  border: 1px solid var(--outline-soft);
+}
+
+.design-chip.active {
+  background: rgba(2, 115, 94, 0.16);
+  border-color: rgba(2, 115, 94, 0.26);
+  color: var(--accent);
 }
 
 .status-row {
