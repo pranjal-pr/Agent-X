@@ -11,6 +11,9 @@ from pydantic import BaseModel, Field
 
 from models import NewsDigest, NewsItem, TechnicalAnalysis
 
+MARKET_DATA_TIMEOUT_SECONDS = 8
+NEWS_SEARCH_TIMEOUT_SECONDS = 8
+
 
 class TickerInput(BaseModel):
     ticker: str = Field(..., description="Public stock ticker symbol such as NVDA")
@@ -68,8 +71,16 @@ class YFinanceTechnicalsTool(BaseTool):
 
     def _run(self, ticker: str) -> str:
         symbol = ticker.strip().upper()
-        stock = yf.Ticker(symbol)
-        history = stock.history(period="6mo", interval="1d", auto_adjust=False)
+        history = yf.download(
+            symbol,
+            period="6mo",
+            interval="1d",
+            auto_adjust=False,
+            progress=False,
+            threads=False,
+            timeout=MARKET_DATA_TIMEOUT_SECONDS,
+            multi_level_index=False,
+        )
         if history.empty:
             raise ValueError(f"No market data returned for ticker '{symbol}'.")
 
@@ -86,13 +97,11 @@ class YFinanceTechnicalsTool(BaseTool):
         rsi_14 = _compute_rsi(closes)
         avg_volume_20 = float(volumes.tail(20).mean())
         latest_timestamp = _coerce_timestamp(history.index[-1])
-
-        fast_info = getattr(stock, "fast_info", {}) or {}
         technicals = TechnicalAnalysis(
             ticker=symbol,
-            company_name=fast_info.get("shortName"),
+            company_name=None,
             price=_round_or_zero(price),
-            currency=fast_info.get("currency"),
+            currency=None,
             change_percent=_round_or_zero(((price - previous_close) / previous_close) * 100, 2),
             rsi_14=rsi_14,
             sma_20=_round_or_zero(sma_20),
@@ -118,21 +127,12 @@ class DuckDuckGoNewsTool(BaseTool):
         symbol = ticker.strip().upper()
         query = f"{symbol} stock market news"
         items: list[NewsItem] = []
+        results: list[dict[str, Any]] = []
 
-        with DDGS() as ddgs:
-            results = list(
-                ddgs.news(
-                    keywords=query,
-                    region="wt-wt",
-                    safesearch="moderate",
-                    timelimit="d",
-                    max_results=6,
-                )
-            )
-
-            if not results:
+        try:
+            with DDGS(timeout=NEWS_SEARCH_TIMEOUT_SECONDS) as ddgs:
                 results = list(
-                    ddgs.text(
+                    ddgs.news(
                         keywords=query,
                         region="wt-wt",
                         safesearch="moderate",
@@ -140,6 +140,19 @@ class DuckDuckGoNewsTool(BaseTool):
                         max_results=6,
                     )
                 )
+
+                if not results:
+                    results = list(
+                        ddgs.text(
+                            keywords=query,
+                            region="wt-wt",
+                            safesearch="moderate",
+                            timelimit="d",
+                            max_results=6,
+                        )
+                    )
+        except Exception:
+            results = []
 
         for result in results[:6]:
             url = result.get("url") or result.get("href")

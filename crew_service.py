@@ -13,6 +13,7 @@ from models import AnalyzeResponse, FinalRecommendation, NewsDigest, TechnicalAn
 from tasks import build_tasks
 
 ModelT = TypeVar("ModelT", bound=BaseModel)
+ANALYSIS_TIMEOUT_SECONDS = 35
 
 
 def _coerce_task_output(task_output: Any, model_cls: type[ModelT]) -> ModelT:
@@ -42,7 +43,15 @@ async def analyze_stock(ticker: str, model_name: str | None = None) -> AnalyzeRe
         memory=False,
         cache=True,
     )
-    result = await asyncio.to_thread(crew.kickoff, inputs={"ticker": normalized_ticker})
+    try:
+        result = await asyncio.wait_for(
+            asyncio.to_thread(crew.kickoff, inputs={"ticker": normalized_ticker}),
+            timeout=ANALYSIS_TIMEOUT_SECONDS,
+        )
+    except TimeoutError as exc:
+        raise TimeoutError(
+            f"Analysis exceeded {ANALYSIS_TIMEOUT_SECONDS} seconds for ticker '{normalized_ticker}'."
+        ) from exc
     latency_seconds = round(perf_counter() - start, 2)
 
     task_outputs = getattr(result, "tasks_output", None) or []
