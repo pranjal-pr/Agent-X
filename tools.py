@@ -73,7 +73,7 @@ class YFinanceTechnicalsTool(BaseTool):
 
     @staticmethod
     def _download_history(symbol: str) -> pd.DataFrame:
-        return yf.download(
+        history = yf.download(
             symbol,
             period="6mo",
             interval="1d",
@@ -82,6 +82,15 @@ class YFinanceTechnicalsTool(BaseTool):
             threads=False,
             timeout=MARKET_DATA_TIMEOUT_SECONDS,
             multi_level_index=False,
+        )
+        if not history.empty:
+            return history
+
+        return yf.Ticker(symbol).history(
+            period="6mo",
+            interval="1d",
+            auto_adjust=False,
+            timeout=MARKET_DATA_TIMEOUT_SECONDS,
         )
 
     def _run(self, ticker: str) -> str:
