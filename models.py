@@ -19,6 +19,13 @@ class AnalyzeRequest(BaseModel):
         return normalized
 
 
+class AttachmentSummary(BaseModel):
+    filename: str
+    media_type: str
+    size_bytes: int = Field(..., ge=0)
+    kind: Literal["file", "photo"]
+
+
 class TechnicalAnalysis(BaseModel):
     ticker: str
     company_name: str | None = None
@@ -67,6 +74,7 @@ class AnalyzeResponse(BaseModel):
     model: str
     generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     latency_seconds: float = Field(..., ge=0)
+    attachments: list[AttachmentSummary] = Field(default_factory=list)
     technicals: TechnicalAnalysis
     news: NewsDigest
     recommendation: FinalRecommendation

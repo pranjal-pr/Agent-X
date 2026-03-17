@@ -79,7 +79,31 @@
             <input id="ticker" name="ticker" type="text" maxlength="10" placeholder="NVDA" autocomplete="off" />
             <button type="submit" id="submit-button">Analyze</button>
           </div>
+          <input id="file-upload-input" type="file" name="attachments" multiple hidden />
+          <input id="photo-upload-input" type="file" name="attachments" accept="image/*" multiple hidden />
         </form>
+
+        <div class="attachment-toolbar">
+          <div class="attach-menu-shell">
+            <button
+              type="button"
+              id="attach-toggle"
+              class="attach-toggle"
+              aria-haspopup="menu"
+              aria-expanded="false"
+              aria-label="Add attachments"
+            >
+              +
+            </button>
+            <div id="attach-menu" class="attach-menu hidden" role="menu" aria-label="Attachment options">
+              <button type="button" class="attach-menu-item" data-attach-action="files">Upload files</button>
+              <button type="button" class="attach-menu-item" data-attach-action="photos">Photos</button>
+            </div>
+          </div>
+          <p class="attachment-copy">Add documents or screenshots as supporting context before you run the agents.</p>
+        </div>
+
+        <div id="attachment-list" class="attachment-list hidden"></div>
 
         <div class="quick-picks">
           <button class="chip" data-ticker="NVDA">NVDA</button>
@@ -118,6 +142,7 @@
             <div class="pill-row">
               <span class="mini-pill" id="model-pill"></span>
               <span class="mini-pill" id="trend-pill"></span>
+              <span class="mini-pill hidden" id="attachments-pill"></span>
             </div>
           </article>
 

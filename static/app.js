@@ -4,6 +4,12 @@ const submitButton = document.getElementById("submit-button");
 const themeToggle = document.getElementById("theme-toggle");
 const themeToggleText = document.getElementById("theme-toggle-text");
 const backgroundPresetButtons = Array.from(document.querySelectorAll("[data-background-preset]"));
+const attachToggle = document.getElementById("attach-toggle");
+const attachMenu = document.getElementById("attach-menu");
+const attachmentMenuActions = Array.from(document.querySelectorAll("[data-attach-action]"));
+const fileUploadInput = document.getElementById("file-upload-input");
+const photoUploadInput = document.getElementById("photo-upload-input");
+const attachmentList = document.getElementById("attachment-list");
 const resultsSection = document.getElementById("results");
 const statusBadge = document.getElementById("status-badge");
 const latencyPill = document.getElementById("latency-pill");
@@ -16,6 +22,7 @@ const timeHorizonEl = document.getElementById("time-horizon");
 const thesisEl = document.getElementById("thesis");
 const modelPill = document.getElementById("model-pill");
 const trendPill = document.getElementById("trend-pill");
+const attachmentsPill = document.getElementById("attachments-pill");
 const metricsGrid = document.getElementById("metrics-grid");
 const technicalSummaryEl = document.getElementById("technical-summary");
 const catalystsList = document.getElementById("catalysts-list");
@@ -26,6 +33,8 @@ const actionPlanEl = document.getElementById("action-plan");
 const THEME_STORAGE_KEY = "stock-syndicate-theme";
 const BACKGROUND_STORAGE_KEY = "stock-syndicate-background";
 const DEFAULT_BACKGROUND_PRESET = "aurora";
+const MAX_ATTACHMENTS = 6;
+let selectedAttachments = [];
 
 function getPreferredTheme() {
   try {
@@ -88,6 +97,139 @@ backgroundPresetButtons.forEach((button) => {
   button.addEventListener("click", () => {
     setBackgroundPreset(button.dataset.backgroundPreset || DEFAULT_BACKGROUND_PRESET);
   });
+});
+
+function formatBytes(sizeBytes) {
+  if (sizeBytes < 1024 * 1024) {
+    return `${Math.max(1, Math.round(sizeBytes / 1024))} KB`;
+  }
+  return `${(sizeBytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function buildAttachmentId(file) {
+  return [file.name, file.size, file.lastModified].join(":");
+}
+
+function closeAttachMenu() {
+  attachMenu.classList.add("hidden");
+  attachToggle.setAttribute("aria-expanded", "false");
+}
+
+function renderAttachments() {
+  attachmentList.replaceChildren();
+  attachmentList.classList.toggle("hidden", selectedAttachments.length === 0);
+
+  selectedAttachments.forEach((attachment) => {
+    const item = document.createElement("article");
+    item.className = "attachment-chip";
+
+    if (attachment.previewUrl) {
+      const preview = document.createElement("img");
+      preview.className = "attachment-preview";
+      preview.alt = `${attachment.file.name} preview`;
+      preview.src = attachment.previewUrl;
+      item.appendChild(preview);
+    } else {
+      const badge = document.createElement("span");
+      badge.className = "attachment-kind";
+      badge.textContent = attachment.kind.toUpperCase();
+      item.appendChild(badge);
+    }
+
+    const body = document.createElement("div");
+    body.className = "attachment-body";
+
+    const name = document.createElement("strong");
+    name.textContent = attachment.file.name;
+
+    const meta = document.createElement("span");
+    meta.className = "attachment-meta";
+    meta.textContent = `${attachment.kind === "photo" ? "Photo" : "File"} · ${formatBytes(attachment.file.size)}`;
+
+    body.append(name, meta);
+
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.className = "attachment-remove";
+    removeButton.textContent = "Remove";
+    removeButton.addEventListener("click", () => {
+      if (attachment.previewUrl) {
+        URL.revokeObjectURL(attachment.previewUrl);
+      }
+      selectedAttachments = selectedAttachments.filter((candidate) => candidate.id !== attachment.id);
+      renderAttachments();
+    });
+
+    item.append(body, removeButton);
+    attachmentList.appendChild(item);
+  });
+}
+
+function mergeAttachments(fileList) {
+  const nextAttachments = [...selectedAttachments];
+
+  for (const file of fileList) {
+    const id = buildAttachmentId(file);
+    if (nextAttachments.some((attachment) => attachment.id === id)) {
+      continue;
+    }
+    if (nextAttachments.length >= MAX_ATTACHMENTS) {
+      setStatus("Attachment limit reached", "error");
+      latencyPill.textContent = `Attach up to ${MAX_ATTACHMENTS} files or photos per request.`;
+      break;
+    }
+
+    nextAttachments.push({
+      id,
+      file,
+      kind: file.type.startsWith("image/") ? "photo" : "file",
+      previewUrl: file.type.startsWith("image/") ? URL.createObjectURL(file) : null,
+    });
+  }
+
+  selectedAttachments = nextAttachments;
+  renderAttachments();
+}
+
+function handleAttachmentSelection(event) {
+  const files = Array.from(event.target.files || []);
+  if (files.length) {
+    mergeAttachments(files);
+  }
+  event.target.value = "";
+}
+
+attachToggle.addEventListener("click", () => {
+  const isOpen = !attachMenu.classList.contains("hidden");
+  attachMenu.classList.toggle("hidden", isOpen);
+  attachToggle.setAttribute("aria-expanded", String(!isOpen));
+});
+
+attachmentMenuActions.forEach((button) => {
+  button.addEventListener("click", () => {
+    closeAttachMenu();
+    if (button.dataset.attachAction === "photos") {
+      photoUploadInput.click();
+      return;
+    }
+    fileUploadInput.click();
+  });
+});
+
+[fileUploadInput, photoUploadInput].forEach((input) => {
+  input.addEventListener("change", handleAttachmentSelection);
+});
+
+document.addEventListener("click", (event) => {
+  if (!attachMenu.contains(event.target) && !attachToggle.contains(event.target)) {
+    closeAttachMenu();
+  }
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    closeAttachMenu();
+  }
 });
 
 function setStatus(label, kind) {
@@ -184,6 +326,12 @@ function renderResult(payload) {
   thesisEl.textContent = payload.recommendation.thesis;
   modelPill.textContent = (payload.model || "").trim();
   trendPill.textContent = `Trend: ${payload.technicals.trend_signal}`;
+  if ((payload.attachments || []).length) {
+    attachmentsPill.textContent = `${payload.attachments.length} attachment${payload.attachments.length === 1 ? "" : "s"}`;
+    attachmentsPill.classList.remove("hidden");
+  } else {
+    attachmentsPill.classList.add("hidden");
+  }
   technicalSummaryEl.textContent = payload.recommendation.technical_summary;
   newsSummaryEl.textContent = payload.recommendation.news_summary;
   actionPlanEl.textContent = payload.recommendation.action_plan;
@@ -197,17 +345,29 @@ function renderResult(payload) {
 
 async function analyzeTicker(ticker) {
   setStatus("Running agents", "running");
-  latencyPill.textContent = "Groq inference in progress";
+  latencyPill.textContent =
+    selectedAttachments.length > 0
+      ? `Uploading ${selectedAttachments.length} attachment${selectedAttachments.length === 1 ? "" : "s"}`
+      : "Groq inference in progress";
   submitButton.disabled = true;
 
   try {
-    const response = await fetch("/api/analyze", {
-      method: "POST",
-      headers: {
+    const requestOptions = { method: "POST" };
+    if (selectedAttachments.length > 0) {
+      const formData = new FormData();
+      formData.append("ticker", ticker);
+      selectedAttachments.forEach((attachment) => {
+        formData.append("attachments", attachment.file, attachment.file.name);
+      });
+      requestOptions.body = formData;
+    } else {
+      requestOptions.headers = {
         "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ ticker }),
-    });
+      };
+      requestOptions.body = JSON.stringify({ ticker });
+    }
+
+    const response = await fetch("/api/analyze", requestOptions);
 
     const payload = await response.json();
     if (!response.ok) {

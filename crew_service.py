@@ -9,7 +9,7 @@ from crewai import Crew, Process
 from pydantic import BaseModel
 
 from agents import DEFAULT_GROQ_MODEL, build_agents, build_groq_llm
-from models import AnalyzeResponse, FinalRecommendation, NewsDigest, TechnicalAnalysis
+from models import AnalyzeResponse, AttachmentSummary, FinalRecommendation, NewsDigest, TechnicalAnalysis
 from tasks import build_strategist_task
 from tools import DuckDuckGoNewsTool, YFinanceTechnicalsTool
 
@@ -29,7 +29,11 @@ def _coerce_task_output(task_output: Any, model_cls: type[ModelT]) -> ModelT:
     raise ValueError(f"Task output did not contain a valid {model_cls.__name__} payload.")
 
 
-async def analyze_stock(ticker: str, model_name: str | None = None) -> AnalyzeResponse:
+async def analyze_stock(
+    ticker: str,
+    model_name: str | None = None,
+    attachments: list[AttachmentSummary] | None = None,
+) -> AnalyzeResponse:
     normalized_ticker = ticker.strip().upper()
     start = perf_counter()
 
@@ -69,6 +73,7 @@ async def analyze_stock(ticker: str, model_name: str | None = None) -> AnalyzeRe
         ticker=normalized_ticker,
         model=model_name or os.getenv("GROQ_MODEL", DEFAULT_GROQ_MODEL),
         latency_seconds=latency_seconds,
+        attachments=attachments or [],
         technicals=technicals,
         news=news,
         recommendation=recommendation,
