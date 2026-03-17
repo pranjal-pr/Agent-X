@@ -4,6 +4,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Stock Analysis Syndicate</title>
+    <script>
+      (() => {
+        try {
+          const storedTheme = localStorage.getItem("stock-syndicate-theme");
+          const prefersDark =
+            window.matchMedia &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches;
+          document.documentElement.dataset.theme =
+            storedTheme || (prefersDark ? "dark" : "light");
+        } catch {
+          document.documentElement.dataset.theme = "light";
+        }
+      })();
+    </script>
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
   <body>
@@ -12,7 +26,21 @@
 
     <main class="shell">
       <section class="hero panel reveal">
-        <p class="eyebrow">Groq + CrewAI Syndicate</p>
+        <div class="hero-head">
+          <p class="eyebrow">Groq + CrewAI Syndicate</p>
+          <button
+            type="button"
+            id="theme-toggle"
+            class="theme-toggle"
+            aria-pressed="false"
+            aria-label="Toggle color theme"
+          >
+            <span class="theme-toggle-track" aria-hidden="true">
+              <span class="theme-toggle-thumb"></span>
+            </span>
+            <span id="theme-toggle-text">Dark mode</span>
+          </button>
+        </div>
         <div class="hero-grid">
           <div>
             <h1>Low-latency stock intelligence from three cooperating agents.</h1>

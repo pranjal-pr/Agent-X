@@ -1,6 +1,8 @@
 const form = document.getElementById("analyze-form");
 const tickerInput = document.getElementById("ticker");
 const submitButton = document.getElementById("submit-button");
+const themeToggle = document.getElementById("theme-toggle");
+const themeToggleText = document.getElementById("theme-toggle-text");
 const resultsSection = document.getElementById("results");
 const statusBadge = document.getElementById("status-badge");
 const latencyPill = document.getElementById("latency-pill");
@@ -20,6 +22,43 @@ const risksList = document.getElementById("risks-list");
 const newsSummaryEl = document.getElementById("news-summary");
 const newsList = document.getElementById("news-list");
 const actionPlanEl = document.getElementById("action-plan");
+const THEME_STORAGE_KEY = "stock-syndicate-theme";
+
+function getPreferredTheme() {
+  try {
+    const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+    if (storedTheme === "dark" || storedTheme === "light") {
+      return storedTheme;
+    }
+  } catch {
+    // Ignore storage access failures and fall back to the system preference.
+  }
+
+  return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function syncThemeToggle() {
+  const isDark = document.documentElement.dataset.theme === "dark";
+  themeToggle.setAttribute("aria-pressed", String(isDark));
+  themeToggleText.textContent = isDark ? "Light mode" : "Dark mode";
+}
+
+function setTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch {
+    // Ignore storage access failures and keep the theme for this session only.
+  }
+  syncThemeToggle();
+}
+
+setTheme(document.documentElement.dataset.theme || getPreferredTheme());
+
+themeToggle.addEventListener("click", () => {
+  const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  setTheme(nextTheme);
+});
 
 function setStatus(label, kind) {
   statusBadge.textContent = label;
@@ -113,7 +152,7 @@ function renderResult(payload) {
   confidenceRing.style.setProperty("--ring-fill", String(payload.recommendation.confidence * 100));
   timeHorizonEl.textContent = `Time horizon: ${payload.recommendation.time_horizon}`;
   thesisEl.textContent = payload.recommendation.thesis;
-  modelPill.textContent = payload.model;
+  modelPill.textContent = (payload.model || "").trim();
   trendPill.textContent = `Trend: ${payload.technicals.trend_signal}`;
   technicalSummaryEl.textContent = payload.recommendation.technical_summary;
   newsSummaryEl.textContent = payload.recommendation.news_summary;
