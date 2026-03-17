@@ -1,10 +1,8 @@
 .git
 .github
-.env
-.env.*
-node_modules
-__pycache__
 .venv
-*.log
-server.out.log
-server.err.log
+__pycache__
+*.pyc
+.env
+.pytest_cache
+.mypy_cache

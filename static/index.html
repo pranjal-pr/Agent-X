@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stock Analysis Syndicate</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="backdrop backdrop-one"></div>
+    <div class="backdrop backdrop-two"></div>
+
+    <main class="shell">
+      <section class="hero panel reveal">
+        <p class="eyebrow">Groq + CrewAI Syndicate</p>
+        <div class="hero-grid">
+          <div>
+            <h1>Low-latency stock intelligence from three cooperating agents.</h1>
+            <p class="lede">
+              Data Miner extracts technicals, News Sentinel scans the last 24 hours,
+              and the Quantitative Strategist issues a trade-ready call.
+            </p>
+          </div>
+          <div class="hero-flow">
+            <div class="flow-node">
+              <span>01</span>
+              <strong>Data Miner</strong>
+              <p>Price, RSI, moving averages, volume.</p>
+            </div>
+            <div class="flow-node">
+              <span>02</span>
+              <strong>News Sentinel</strong>
+              <p>DuckDuckGo search across the last 24 hours.</p>
+            </div>
+            <div class="flow-node">
+              <span>03</span>
+              <strong>Quant Strategist</strong>
+              <p>BUY, HOLD, or SELL with confidence and risks.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="control panel reveal delay-1">
+        <form id="analyze-form" class="analyze-form">
+          <label for="ticker">Ticker</label>
+          <div class="input-row">
+            <input id="ticker" name="ticker" type="text" maxlength="10" placeholder="NVDA" autocomplete="off" />
+            <button type="submit" id="submit-button">Analyze</button>
+          </div>
+        </form>
+
+        <div class="quick-picks">
+          <button class="chip" data-ticker="NVDA">NVDA</button>
+          <button class="chip" data-ticker="AAPL">AAPL</button>
+          <button class="chip" data-ticker="MSFT">MSFT</button>
+          <button class="chip" data-ticker="AMD">AMD</button>
+        </div>
+
+        <div class="status-row">
+          <div id="status-badge" class="status-badge idle">Ready</div>
+          <div id="latency-pill" class="latency-pill">Awaiting run</div>
+        </div>
+      </section>
+
+      <section id="results" class="results hidden">
+        <div class="summary-grid">
+          <article class="panel recommendation-card reveal delay-2">
+            <p class="eyebrow">Strategist Call</p>
+            <div class="recommendation-topline">
+              <h2 id="stance">-</h2>
+              <div id="confidence-ring" class="confidence-ring">
+                <span id="confidence-value">0%</span>
+              </div>
+            </div>
+            <p id="time-horizon" class="time-horizon"></p>
+            <p id="thesis" class="body-copy"></p>
+            <div class="pill-row">
+              <span class="mini-pill" id="model-pill"></span>
+              <span class="mini-pill" id="trend-pill"></span>
+            </div>
+          </article>
+
+          <article class="panel metrics-card reveal delay-3">
+            <p class="eyebrow">Technical Stack</p>
+            <div id="metrics-grid" class="metrics-grid"></div>
+            <div class="insight-block">
+              <h3>Technical Summary</h3>
+              <p id="technical-summary" class="body-copy"></p>
+            </div>
+          </article>
+        </div>
+
+        <div class="detail-grid">
+          <article class="panel reveal delay-4">
+            <p class="eyebrow">Catalysts</p>
+            <ul id="catalysts-list" class="signal-list"></ul>
+          </article>
+
+          <article class="panel reveal delay-4">
+            <p class="eyebrow">Risk Radar</p>
+            <ul id="risks-list" class="signal-list"></ul>
+          </article>
+        </div>
+
+        <div class="detail-grid">
+          <article class="panel reveal delay-5">
+            <p class="eyebrow">News Flow</p>
+            <p id="news-summary" class="body-copy"></p>
+            <div id="news-list" class="news-list"></div>
+          </article>
+
+          <article class="panel reveal delay-5">
+            <p class="eyebrow">Execution Plan</p>
+            <p id="action-plan" class="body-copy"></p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <template id="metric-card-template">
+      <div class="metric-card">
+        <span class="metric-label"></span>
+        <strong class="metric-value"></strong>
+      </div>
+    </template>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>

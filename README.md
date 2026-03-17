@@ -1,134 +1,108 @@
----
-title: Pranjal AI Agent Lab
-emoji: "🤖"
-colorFrom: red
-colorTo: blue
-sdk: docker
-app_port: 7860
-fullWidth: true
-short_description: Portfolio site with a modular ReAct AI agent demo.
----
+# Groq Multi-Agent Stock Analysis Syndicate
 
-# Pranjal Portfolio
+Portfolio-grade stock analysis demo that combines CrewAI orchestration, Groq inference, yfinance technical indicators, DuckDuckGo news retrieval, and a FastAPI UI layer.
 
-Express portfolio app with:
+## Runtime Baseline
 
-- public portfolio site
-- admin console at `/admin`
-- content persistence in Neon Postgres
-- contact API with optional SMTP delivery
+- Python: `3.11` recommended for local dev, CI, and deployment
+- Deployment target: Hugging Face Docker Space
+- CI/CD: GitHub Actions
 
-## Local Run
+## Features
 
-1. Create a `.env` file from `.env.example`
-2. Set at minimum:
-   - `ADMIN_PASSWORD`
-   - `ADMIN_SESSION_SECRET`
-3. Optional for full Postgres persistence:
-   - `DATABASE_URL`
-4. Start the app:
+- Three-agent CrewAI workflow: Data Miner, News Sentinel, Quantitative Strategist
+- Groq-backed inference via `langchain_groq.ChatGroq`
+- Typed Pydantic contracts for API inputs, tool outputs, and final recommendation
+- FastAPI backend with a static browser UI
+- Concurrent technical and news gathering before final synthesis
 
-```powershell
-npm install
-npm start
-```
+## Setup
 
-Validation scripts:
-
-```powershell
-npm run check
-npm run smoke
-npm run ci
-```
-
-App URLs:
-
-- `http://localhost:3000`
-- `http://localhost:3000/admin`
-- `http://localhost:3000/agent`
-- `http://localhost:3000/api/health`
-
-The `/agent` page runs the Python ReAct scaffold in this repo.
-Install the Python dependency before using that route:
-
-```powershell
+```bash
+python -m venv .venv
+.venv\Scripts\activate
 pip install -r requirements.txt
+copy .env.example .env
 ```
 
-Optional environment variables for the agent page:
+Set `GROQ_API_KEY` in `.env`, then start the UI:
 
-- `PYTHON_EXECUTABLE`
-- `AGENT_TIMEOUT_MS`
-- `OPENAI_API_KEY`
-- `OPENAI_MODEL`
+```bash
+python main.py --serve
+```
 
-## Hugging Face Spaces
+Open `http://127.0.0.1:8000`.
 
-This repo is prepared for a Docker Space deployment.
+Run a one-off CLI analysis:
 
-Hugging Face requires Docker Spaces to declare `sdk: docker` in the YAML block
-at the top of the root `README.md`, and the app must listen on the configured
-`app_port`. This repo now uses `app_port: 7860` and the Docker image sets
-`PORT=7860`.
+```bash
+python main.py --ticker NVDA
+```
 
-The Space runs in file-persistence mode by default unless you also provide
-`DATABASE_URL`. Hugging Face Spaces use ephemeral local storage, so content
-changes made without an external database will not persist across rebuilds.
+## Exact Groq Integration
 
-Deployment flow:
+`agents.py` initializes Groq through CrewAI's `LLM` wrapper and injects it into each agent through `llm=...`:
 
-1. Create a new Space on Hugging Face and choose `Docker` as the SDK.
-2. Push this repository to the Space repo.
-3. In the Space settings, add secrets or variables as needed:
-   - `OPENAI_API_KEY` if you want the agent to use OpenAI instead of demo mode
-   - `OPENAI_MODEL` if you want a non-default OpenAI model
-   - `ADMIN_PASSWORD`
-   - `ADMIN_SESSION_SECRET`
-   - any optional contact/SMTP variables you already use
+```python
+llm = LLM(
+    model="groq/llama-3.3-70b-versatile",
+    api_key=os.getenv("GROQ_API_KEY"),
+    temperature=0.1,
+    max_tokens=1200,
+    timeout=8,
+)
 
-The Docker image installs both Node.js dependencies and the Python runtime
-needed for the agent endpoint.
+agent = Agent(
+    role="Data Miner",
+    goal="Extract fresh technical signals for a stock ticker.",
+    llm=llm,
+    tools=[YFinanceTechnicalsTool()],
+)
+```
 
-## Render + Neon
+`langchain_groq` remains in `requirements.txt` if you want a standalone LangChain Groq client outside CrewAI, but the current runtime path in this project uses CrewAI's native `LLM` for compatibility with `crewai==0.102.0`.
 
-1. Create a Neon Postgres project and copy the pooled `DATABASE_URL`
-2. Create a Render Web Service from this repo
-3. Use `render.yaml`
-4. Set these environment variables in Render:
-   - `DATABASE_URL`
-   - `ADMIN_PASSWORD`
-   - `ADMIN_SESSION_SECRET`
-5. Optional SMTP variables if you want contact form emails delivered
-6. Connect the GitHub repository to Render
-7. Keep auto deploy set to CI checks pass
+## GitHub CI/CD to Hugging Face
 
-## GitHub CI/CD
+The repo now includes two GitHub Actions workflows:
 
-This repo includes a GitHub Actions workflow at `.github/workflows/ci.yml`.
+- `.github/workflows/ci.yml`
+  - installs dependencies on Python `3.11`
+  - runs `python -m compileall .`
+  - runs smoke tests from `tests/test_smoke.py`
+  - builds the Docker image to catch deployment regressions early
+- `.github/workflows/deploy-huggingface.yml`
+  - waits for the CI workflow to succeed on `main`
+  - swaps in `README.space.md` for Hugging Face metadata
+  - force-pushes the validated commit to your Hugging Face Space repo
 
-Pipeline behavior:
+### GitHub Secrets
 
-- every push and PR runs `npm ci` and `npm run ci`
-- `npm run ci` performs syntax checks and an end-to-end smoke test
-- every push to `main` auto-deploys to the Hugging Face Space `praanjalpradhan/aiagentic` after CI passes
-- Render is configured with `autoDeployTrigger: checksPass` in `render.yaml`
-- when the `main` branch checks pass, Render deploys automatically
+Add these repository secrets in GitHub:
 
-This is cleaner than using a deploy hook because GitHub owns the checks and Render only deploys verified commits.
+- `HF_TOKEN`: a Hugging Face user access token with write access to the target Space
+- `HF_SPACE_REPO`: the Space identifier in the form `username/space-name`
 
-To enable Hugging Face auto-deploy from GitHub Actions, add this repository secret:
+### Hugging Face Space Setup
 
-- `HF_TOKEN`
+1. Create a new Docker Space on Hugging Face.
+2. Set these Space secrets:
+   - `GROQ_API_KEY`
+   - `GROQ_MODEL` optional
+3. Push this project to GitHub.
+4. Set the GitHub repository secrets listed above.
+5. Merge or push to `main` to trigger CI and automatic deployment.
 
-Recommended:
+The Docker runtime is defined in `Dockerfile`, and Hugging Face Space metadata lives in `README.space.md`.
 
-- revoke the Hugging Face token that was pasted into chat earlier
-- create a fresh write token in Hugging Face
-- store that new token as the GitHub Actions secret `HF_TOKEN`
+## Project Layout
 
-The app auto-creates these tables on first boot:
-
-- `site_content`
-- `contact_messages`
-
-On first startup, the database is seeded from `content.json`.
+- `tools.py`: tool wrappers for yfinance technicals and DuckDuckGo news
+- `agents.py`: CrewAI agents with Groq-backed prompts
+- `tasks.py`: task graph and hand-offs
+- `crew_service.py`: crew execution and response assembly
+- `api.py`: FastAPI server and API routes
+- `main.py`: CLI and server entry point
+- `static/`: frontend UI
+- `Dockerfile`: deployment image for Hugging Face Spaces
+- `.github/workflows/`: CI and CD pipelines
