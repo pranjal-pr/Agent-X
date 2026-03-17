@@ -10,7 +10,8 @@ from pydantic import BaseModel
 
 from agents import DEFAULT_GROQ_MODEL, build_agents, build_groq_llm
 from models import AnalyzeResponse, FinalRecommendation, NewsDigest, TechnicalAnalysis
-from tasks import build_tasks
+from tasks import build_strategist_task
+from tools import DuckDuckGoNewsTool, YFinanceTechnicalsTool
 
 ModelT = TypeVar("ModelT", bound=BaseModel)
 ANALYSIS_TIMEOUT_SECONDS = 35
@@ -30,14 +31,18 @@ def _coerce_task_output(task_output: Any, model_cls: type[ModelT]) -> ModelT:
 
 async def analyze_stock(ticker: str, model_name: str | None = None) -> AnalyzeResponse:
     normalized_ticker = ticker.strip().upper()
+    start = perf_counter()
+
+    technicals = TechnicalAnalysis.model_validate_json(YFinanceTechnicalsTool()._run(normalized_ticker))
+    news = NewsDigest.model_validate_json(DuckDuckGoNewsTool()._run(normalized_ticker))
+
     llm = build_groq_llm(model_name)
     agents = build_agents(llm)
-    tasks = build_tasks(agents, normalized_ticker)
+    strategist_task = build_strategist_task(agents, technicals, news)
 
-    start = perf_counter()
     crew = Crew(
-        agents=agents.as_list(),
-        tasks=tasks,
+        agents=[agents.quantitative_strategist],
+        tasks=[strategist_task],
         process=Process.sequential,
         verbose=False,
         memory=False,
@@ -45,7 +50,7 @@ async def analyze_stock(ticker: str, model_name: str | None = None) -> AnalyzeRe
     )
     try:
         result = await asyncio.wait_for(
-            asyncio.to_thread(crew.kickoff, inputs={"ticker": normalized_ticker}),
+            asyncio.to_thread(crew.kickoff),
             timeout=ANALYSIS_TIMEOUT_SECONDS,
         )
     except TimeoutError as exc:
@@ -55,12 +60,10 @@ async def analyze_stock(ticker: str, model_name: str | None = None) -> AnalyzeRe
     latency_seconds = round(perf_counter() - start, 2)
 
     task_outputs = getattr(result, "tasks_output", None) or []
-    if len(task_outputs) < 3:
-        raise ValueError("CrewAI did not return all task outputs.")
+    if len(task_outputs) < 1:
+        raise ValueError("CrewAI did not return a strategist output.")
 
-    technicals = _coerce_task_output(task_outputs[0], TechnicalAnalysis)
-    news = _coerce_task_output(task_outputs[1], NewsDigest)
-    recommendation = _coerce_task_output(task_outputs[2], FinalRecommendation)
+    recommendation = _coerce_task_output(task_outputs[0], FinalRecommendation)
 
     return AnalyzeResponse(
         ticker=normalized_ticker,

@@ -46,3 +46,26 @@ def build_tasks(agents: AgentBundle, ticker: str) -> list[Task]:
     )
 
     return [technicals_task, news_task, strategist_task]
+
+
+def build_strategist_task(
+    agents: AgentBundle,
+    technicals: TechnicalAnalysis,
+    news: NewsDigest,
+) -> Task:
+    technicals_json = technicals.model_dump_json(indent=2)
+    news_json = news.model_dump_json(indent=2)
+
+    return Task(
+        description=(
+            f"Synthesize the technical analysis and news digest for ticker {technicals.ticker}. "
+            "Produce a BUY, HOLD, or SELL recommendation with calibrated confidence, a clear time horizon, "
+            "an evidence-based thesis, specific catalysts, specific risks, and an action plan.\n\n"
+            f"Technical analysis JSON:\n{technicals_json}\n\n"
+            f"News digest JSON:\n{news_json}\n\n"
+            "Use only the JSON evidence above and return only JSON that matches the FinalRecommendation schema."
+        ),
+        expected_output="A valid FinalRecommendation JSON object.",
+        agent=agents.quantitative_strategist,
+        output_pydantic=FinalRecommendation,
+    )
