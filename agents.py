@@ -11,11 +11,11 @@ DEFAULT_GROQ_MODEL = "llama-3.3-70b-versatile"
 
 
 def build_groq_llm(model_name: str | None = None) -> LLM:
-    api_key = os.getenv("GROQ_API_KEY")
+    api_key = (os.getenv("GROQ_API_KEY") or "").strip()
     if not api_key:
         raise ValueError("Missing GROQ_API_KEY. Add it to your environment or .env file.")
 
-    resolved_model = model_name or os.getenv("GROQ_MODEL", DEFAULT_GROQ_MODEL)
+    resolved_model = (model_name or os.getenv("GROQ_MODEL", DEFAULT_GROQ_MODEL)).strip()
     if not resolved_model.startswith("groq/"):
         resolved_model = f"groq/{resolved_model}"
 
