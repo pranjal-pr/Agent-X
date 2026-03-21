@@ -557,25 +557,26 @@ button {
   display: none;
 }
 
-.summary-grid,
-.detail-grid {
+.results-columns {
   display: grid;
   gap: 1rem;
   margin-top: 1rem;
   align-items: start;
 }
 
-.summary-grid {
+.results-columns {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.detail-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+.results-column {
+  display: grid;
+  gap: 1rem;
+  align-content: start;
 }
 
 .recommendation-card,
 .metrics-card,
-.detail-grid .panel {
+.results-column .panel {
   padding: 1.4rem;
 }
 
@@ -745,8 +746,7 @@ h2 {
 
 @media (max-width: 900px) {
   .hero-grid,
-  .summary-grid,
-  .detail-grid {
+  .results-columns {
     grid-template-columns: 1fr;
   }
 
@@ -770,7 +770,7 @@ h2 {
   .control,
   .recommendation-card,
   .metrics-card,
-  .detail-grid .panel {
+  .results-column .panel {
     padding: 1.1rem;
   }
 
