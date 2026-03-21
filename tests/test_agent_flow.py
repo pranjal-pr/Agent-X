@@ -9,6 +9,7 @@ from crewai import Process
 
 from crew_service import analyze_stock
 from models import FinalRecommendation, NewsDigest, TechnicalAnalysis
+from tools import ResolvedStockQuery
 
 
 def build_technicals() -> TechnicalAnalysis:
@@ -74,12 +75,20 @@ class AgentFlowTests(unittest.TestCase):
         with (
             patch("crew_service.build_groq_llm", return_value=object()),
             patch("crew_service.build_agents", return_value=fake_bundle),
+            patch(
+                "crew_service.resolve_stock_query",
+                return_value=ResolvedStockQuery(
+                    query="nvda",
+                    symbol="NVDA",
+                    company_name="NVIDIA Corporation",
+                ),
+            ),
             patch("crew_service.build_tasks", return_value=fake_tasks) as mocked_build_tasks,
             patch("crew_service.Crew", return_value=fake_crew) as mocked_crew,
         ):
             response = asyncio.run(analyze_stock(" nvda "))
 
-        mocked_build_tasks.assert_called_once_with(fake_bundle, "NVDA")
+        mocked_build_tasks.assert_called_once_with(fake_bundle, "NVDA", "NVIDIA Corporation")
         fake_bundle.as_list.assert_called_once_with()
         mocked_crew.assert_called_once()
         crew_kwargs = mocked_crew.call_args.kwargs
@@ -90,6 +99,7 @@ class AgentFlowTests(unittest.TestCase):
         self.assertEqual(response.technicals.ticker, "NVDA")
         self.assertEqual(response.news.ticker, "NVDA")
         self.assertEqual(response.recommendation.ticker, "NVDA")
+        self.assertEqual(response.technicals.company_name, "NVIDIA Corporation")
 
     def test_analyze_stock_can_fall_back_to_task_output_attributes(self) -> None:
         technicals = build_technicals()
@@ -109,6 +119,14 @@ class AgentFlowTests(unittest.TestCase):
         with (
             patch("crew_service.build_groq_llm", return_value=object()),
             patch("crew_service.build_agents", return_value=fake_bundle),
+            patch(
+                "crew_service.resolve_stock_query",
+                return_value=ResolvedStockQuery(
+                    query="NVDA",
+                    symbol="NVDA",
+                    company_name="NVIDIA Corporation",
+                ),
+            ),
             patch("crew_service.build_tasks", return_value=fake_tasks),
             patch("crew_service.Crew", return_value=fake_crew),
         ):

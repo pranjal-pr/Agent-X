@@ -366,10 +366,10 @@ async function analyzeTicker(ticker) {
 
 form.addEventListener("submit", (event) => {
   event.preventDefault();
-  const ticker = tickerInput.value.trim().toUpperCase();
+  const ticker = tickerInput.value.trim();
   if (!ticker) {
-    setStatus("Ticker required", "error");
-    latencyPill.textContent = "Enter a stock symbol such as NVDA.";
+    setStatus("Input required", "error");
+    latencyPill.textContent = "Enter a stock symbol or company name such as NVDA or Tata Consultancy Services.";
     return;
   }
 

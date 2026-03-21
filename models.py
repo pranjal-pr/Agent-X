@@ -7,16 +7,27 @@ from pydantic import BaseModel, Field, field_validator
 
 
 class AnalyzeRequest(BaseModel):
-    ticker: str = Field(..., min_length=1, max_length=10, description="Public stock ticker symbol")
+    ticker: str = Field(..., min_length=1, max_length=80, description="Public stock ticker symbol or company name")
 
     @field_validator("ticker")
     @classmethod
     def normalize_ticker(cls, value: str) -> str:
-        normalized = value.strip().upper()
-        stripped = normalized.replace(".", "").replace("-", "")
-        if not stripped.isalnum():
-            raise ValueError("Ticker must be alphanumeric.")
-        return normalized
+        normalized = " ".join(value.strip().split())
+        if not normalized:
+            raise ValueError("Enter a stock symbol or company name.")
+
+        allowed_punctuation = {".", "-", "&", "'", " "}
+        if any(not (character.isalnum() or character in allowed_punctuation) for character in normalized):
+            raise ValueError("Use letters, numbers, spaces, dots, apostrophes, ampersands, or hyphens only.")
+
+        stripped = normalized.replace(".", "").replace("-", "").replace(" ", "").replace("&", "").replace("'", "")
+        if not stripped:
+            raise ValueError("Enter a valid stock symbol or company name.")
+
+        looks_like_ticker = " " not in normalized and all(
+            character.isalnum() or character in {".", "-"} for character in normalized
+        )
+        return normalized.upper() if looks_like_ticker else normalized
 
 
 class AttachmentSummary(BaseModel):

@@ -49,6 +49,10 @@ class AppSmokeTests(unittest.TestCase):
         payload = AnalyzeRequest(ticker=" brk.b ")
         self.assertEqual(payload.ticker, "BRK.B")
 
+    def test_company_name_input_is_accepted(self) -> None:
+        payload = AnalyzeRequest(ticker=" Tata Consultancy Services ")
+        self.assertEqual(payload.ticker, "Tata Consultancy Services")
+
     def test_healthcheck_returns_ok(self) -> None:
         response = asyncio.run(healthcheck())
         self.assertEqual(response["status"], "ok")

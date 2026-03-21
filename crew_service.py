@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from agents import DEFAULT_GROQ_MODEL, build_agents, build_groq_llm
 from models import AnalyzeResponse, AttachmentSummary, FinalRecommendation, NewsDigest, TechnicalAnalysis
 from tasks import build_tasks
+from tools import resolve_stock_query
 
 ModelT = TypeVar("ModelT", bound=BaseModel)
 ANALYSIS_TIMEOUT_SECONDS = 35
@@ -45,12 +46,13 @@ async def analyze_stock(
     model_name: str | None = None,
     attachments: list[AttachmentSummary] | None = None,
 ) -> AnalyzeResponse:
-    normalized_ticker = ticker.strip().upper()
+    resolved_stock = await asyncio.to_thread(resolve_stock_query, ticker)
+    normalized_ticker = resolved_stock.symbol
     start = perf_counter()
 
     llm = build_groq_llm(model_name)
     agents = build_agents(llm)
-    tasks = build_tasks(agents, normalized_ticker)
+    tasks = build_tasks(agents, normalized_ticker, resolved_stock.company_name)
 
     crew = Crew(
         agents=agents.as_list(),
@@ -75,6 +77,9 @@ async def analyze_stock(
     technicals = _coerce_task_output(task_outputs[0], TechnicalAnalysis)
     news = _coerce_task_output(task_outputs[1], NewsDigest)
     recommendation = _coerce_task_output(task_outputs[2], FinalRecommendation)
+
+    if resolved_stock.company_name and not technicals.company_name:
+        technicals = technicals.model_copy(update={"company_name": resolved_stock.company_name})
 
     return AnalyzeResponse(
         ticker=normalized_ticker,

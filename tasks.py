@@ -6,12 +6,22 @@ from agents import AgentBundle
 from models import FinalRecommendation, NewsDigest, TechnicalAnalysis
 
 
-def build_tasks(agents: AgentBundle, ticker: str) -> list[Task]:
+def build_tasks(agents: AgentBundle, ticker: str, company_name: str | None = None) -> list[Task]:
+    stock_context = f"{company_name} ({ticker})" if company_name else ticker
+    technical_tool_hint = (
+        f'Call yfinance_technicals exactly once with ticker="{ticker}"'
+        + (f' and company_name="{company_name}".' if company_name else ".")
+    )
+    news_tool_hint = (
+        f'Call duckduckgo_stock_news exactly once with ticker="{ticker}"'
+        + (f' and company_name="{company_name}".' if company_name else ".")
+    )
+
     technicals_task = Task(
         description=(
-            f"Analyze ticker {ticker}. Use the yfinance_technicals tool exactly once. Extract the latest "
-            "price, RSI, moving averages, volume, and a defensible trend signal. Return only JSON that "
-            "matches the TechnicalAnalysis schema."
+            f"Analyze {stock_context}. {technical_tool_hint} Extract the latest price, RSI, moving "
+            "averages, volume, and a defensible trend signal. Return only JSON that matches the "
+            "TechnicalAnalysis schema."
         ),
         expected_output="A valid TechnicalAnalysis JSON object.",
         agent=agents.data_miner,
@@ -21,10 +31,9 @@ def build_tasks(agents: AgentBundle, ticker: str) -> list[Task]:
 
     news_task = Task(
         description=(
-            f"Search the last 24 hours of market-moving coverage for ticker {ticker}. Use the "
-            "duckduckgo_stock_news tool exactly once. Prioritize earnings, guidance, product launches, "
-            "analyst actions, regulation, and macro headlines. Return only JSON that matches the "
-            "NewsDigest schema."
+            f"Search the last 24 hours of market-moving coverage for {stock_context}. {news_tool_hint} "
+            "Prioritize earnings, guidance, product launches, analyst actions, regulation, and macro "
+            "headlines. Return only JSON that matches the NewsDigest schema."
         ),
         expected_output="A valid NewsDigest JSON object.",
         agent=agents.news_sentinel,

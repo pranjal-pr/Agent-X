@@ -67,9 +67,16 @@
 
       <section class="control panel reveal delay-1">
         <form id="analyze-form" class="analyze-form">
-          <label for="ticker">Ticker</label>
+          <label for="ticker">Ticker or Company</label>
           <div class="input-row">
-            <input id="ticker" name="ticker" type="text" maxlength="10" placeholder="NVDA" autocomplete="off" />
+            <input
+              id="ticker"
+              name="ticker"
+              type="text"
+              maxlength="80"
+              placeholder="NVDA or Tata Consultancy Services"
+              autocomplete="off"
+            />
             <button type="submit" id="submit-button">Analyze</button>
           </div>
           <input id="file-upload-input" type="file" name="attachments" multiple hidden />

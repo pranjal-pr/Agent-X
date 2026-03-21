@@ -14,11 +14,122 @@ from models import NewsDigest, NewsItem, TechnicalAnalysis
 
 MARKET_DATA_TIMEOUT_SECONDS = 8
 NEWS_SEARCH_TIMEOUT_SECONDS = 8
+SYMBOL_SEARCH_TIMEOUT_SECONDS = 8
 MAX_NEWS_ITEMS = 4
+MAX_SEARCH_QUOTES = 8
+
+
+class ResolvedStockQuery(BaseModel):
+    query: str
+    symbol: str
+    company_name: str | None = None
 
 
 class TickerInput(BaseModel):
     ticker: str = Field(..., description="Public stock ticker symbol such as NVDA")
+    company_name: str | None = Field(default=None, description="Optional company name hint for relevance")
+
+
+def _normalize_lookup_text(value: str | None) -> str:
+    return " ".join((value or "").strip().split()).casefold()
+
+
+def _quote_score(query: str, quote: dict[str, Any], position: int) -> int:
+    query_norm = _normalize_lookup_text(query)
+    query_symbol_norm = query.replace(".", "").replace("-", "").replace(" ", "").casefold()
+    symbol = (quote.get("symbol") or "").strip().upper()
+    symbol_norm = symbol.replace(".", "").replace("-", "").casefold()
+    shortname = quote.get("shortname") or ""
+    longname = quote.get("longname") or ""
+    exchange = (quote.get("exchange") or "").upper()
+    score = max(0, 30 - position * 2)
+
+    if (quote.get("quoteType") or "").upper() == "EQUITY":
+        score += 200
+
+    if symbol and query.strip().upper() == symbol:
+        score += 400
+    elif symbol_norm and query_symbol_norm == symbol_norm:
+        score += 320
+
+    exchange_bonus = {
+        "NMS": 18,
+        "NAS": 18,
+        "NYQ": 18,
+        "ASE": 16,
+        "NSI": 20,
+        "BSE": 18,
+        "TOR": 12,
+        "LSE": 10,
+    }
+    score += exchange_bonus.get(exchange, 0)
+
+    for name in (shortname, longname):
+        name_norm = _normalize_lookup_text(name)
+        if not name_norm:
+            continue
+        if query_norm == name_norm:
+            score += 260
+        elif name_norm.startswith(query_norm):
+            score += 220
+        elif query_norm and all(token in name_norm for token in query_norm.split()):
+            score += 150
+        elif query_norm and query_norm in name_norm:
+            score += 100
+
+    return score
+
+
+def _search_quotes(query: str) -> list[dict[str, Any]]:
+    search = yf.Search(query=query, max_results=MAX_SEARCH_QUOTES)
+    return list(getattr(search, "quotes", None) or [])
+
+
+def resolve_stock_query(query: str) -> ResolvedStockQuery:
+    cleaned_query = " ".join(query.strip().split())
+    if not cleaned_query:
+        raise ValueError("Enter a stock symbol or company name.")
+
+    executor = ThreadPoolExecutor(max_workers=1)
+    future = executor.submit(_search_quotes, cleaned_query)
+    try:
+        quotes = future.result(timeout=SYMBOL_SEARCH_TIMEOUT_SECONDS + 1)
+    except FutureTimeoutError as exc:
+        raise ValueError(f"Stock lookup timed out for '{cleaned_query}'.") from exc
+    finally:
+        executor.shutdown(wait=False, cancel_futures=True)
+
+    ranked_quotes = sorted(
+        (
+            quote
+            for quote in quotes
+            if quote.get("symbol") and (quote.get("quoteType") or "").upper() == "EQUITY"
+        ),
+        key=lambda quote: _quote_score(cleaned_query, quote, quotes.index(quote)),
+        reverse=True,
+    )
+
+    if not ranked_quotes:
+        ranked_quotes = sorted(
+            (quote for quote in quotes if quote.get("symbol")),
+            key=lambda quote: _quote_score(cleaned_query, quote, quotes.index(quote)),
+            reverse=True,
+        )
+
+    if ranked_quotes:
+        best_match = ranked_quotes[0]
+        return ResolvedStockQuery(
+            query=cleaned_query,
+            symbol=str(best_match["symbol"]).strip().upper(),
+            company_name=(best_match.get("longname") or best_match.get("shortname") or None),
+        )
+
+    fallback_symbol = cleaned_query.upper()
+    fallback_key = fallback_symbol.replace(".", "").replace("-", "")
+    if fallback_key.isalnum():
+        return ResolvedStockQuery(query=cleaned_query, symbol=fallback_symbol)
+
+    raise ValueError(f"Could not match '{cleaned_query}' to a stock symbol.")
 
 
 def _round_or_zero(value: Any, digits: int = 2) -> float:
@@ -93,7 +204,7 @@ class YFinanceTechnicalsTool(BaseTool):
             timeout=MARKET_DATA_TIMEOUT_SECONDS,
         )
 
-    def _run(self, ticker: str) -> str:
+    def _run(self, ticker: str, company_name: str | None = None) -> str:
         symbol = ticker.strip().upper()
         executor = ThreadPoolExecutor(max_workers=1)
         future = executor.submit(self._download_history, symbol)
@@ -121,7 +232,7 @@ class YFinanceTechnicalsTool(BaseTool):
         latest_timestamp = _coerce_timestamp(history.index[-1])
         technicals = TechnicalAnalysis(
             ticker=symbol,
-            company_name=None,
+            company_name=company_name.strip() if company_name else None,
             price=_round_or_zero(price),
             currency=None,
             change_percent=_round_or_zero(((price - previous_close) / previous_close) * 100, 2),
@@ -170,9 +281,11 @@ class DuckDuckGoNewsTool(BaseTool):
                 )
         return results
 
-    def _run(self, ticker: str) -> str:
+    def _run(self, ticker: str, company_name: str | None = None) -> str:
         symbol = ticker.strip().upper()
-        query = f"{symbol} stock market news"
+        company_hint = " ".join((company_name or "").split())
+        search_anchor = " ".join(part for part in [company_hint, symbol] if part)
+        query = f"{search_anchor} stock market news"
         items: list[NewsItem] = []
         results: list[dict[str, Any]] = []
 
