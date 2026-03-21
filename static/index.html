@@ -8,25 +8,18 @@
       (() => {
         try {
           const storedTheme = localStorage.getItem("stock-syndicate-theme");
-          const storedBackground = localStorage.getItem("stock-syndicate-background");
           const prefersDark =
             window.matchMedia &&
             window.matchMedia("(prefers-color-scheme: dark)").matches;
-          document.documentElement.dataset.theme =
-            storedTheme || (prefersDark ? "dark" : "light");
-          document.documentElement.dataset.background = storedBackground || "aurora";
+          document.documentElement.dataset.theme = storedTheme || (prefersDark ? "dark" : "light");
         } catch {
           document.documentElement.dataset.theme = "light";
-          document.documentElement.dataset.background = "aurora";
         }
       })();
     </script>
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
   <body>
-    <div class="backdrop backdrop-one"></div>
-    <div class="backdrop backdrop-two"></div>
-
     <main class="shell">
       <section class="hero panel reveal">
         <div class="hero-head">
@@ -144,15 +137,6 @@
           <button type="button" class="chip" data-ticker="AAPL">AAPL</button>
           <button type="button" class="chip" data-ticker="MSFT">MSFT</button>
           <button type="button" class="chip" data-ticker="AMD">AMD</button>
-        </div>
-
-        <div class="design-row">
-          <span class="design-label">Backdrop</span>
-          <div class="background-picks">
-            <button type="button" class="design-chip" data-background-preset="aurora">Aurora</button>
-            <button type="button" class="design-chip" data-background-preset="terminal">Terminal</button>
-            <button type="button" class="design-chip" data-background-preset="sunset">Sunset</button>
-          </div>
         </div>
 
         <div class="status-row">
