@@ -4,6 +4,7 @@ const submitButton = document.getElementById("submit-button");
 const themeToggle = document.getElementById("theme-toggle");
 const themeToggleText = document.getElementById("theme-toggle-text");
 const backgroundPresetButtons = Array.from(document.querySelectorAll("[data-background-preset]"));
+const quickPickButtons = Array.from(document.querySelectorAll("[data-ticker]"));
 const attachToggle = document.getElementById("attach-toggle");
 const attachMenu = document.getElementById("attach-menu");
 const attachmentMenuActions = Array.from(document.querySelectorAll("[data-attach-action]"));
@@ -98,6 +99,15 @@ backgroundPresetButtons.forEach((button) => {
     setBackgroundPreset(button.dataset.backgroundPreset || DEFAULT_BACKGROUND_PRESET);
   });
 });
+
+function syncQuickPickSelection() {
+  const activeTicker = tickerInput.value.trim().toUpperCase();
+  quickPickButtons.forEach((button) => {
+    const isActive = button.dataset.ticker === activeTicker;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-pressed", String(isActive));
+  });
+}
 
 function formatBytes(sizeBytes) {
   if (sizeBytes < 1024 * 1024) {
@@ -396,10 +406,19 @@ form.addEventListener("submit", (event) => {
   analyzeTicker(ticker);
 });
 
-document.querySelectorAll("[data-ticker]").forEach((button) => {
+tickerInput.addEventListener("input", () => {
+  syncQuickPickSelection();
+});
+
+quickPickButtons.forEach((button) => {
   button.addEventListener("click", () => {
     const ticker = button.dataset.ticker;
     tickerInput.value = ticker;
-    analyzeTicker(ticker);
+    syncQuickPickSelection();
+    tickerInput.focus();
+    setStatus("Ticker ready", "idle");
+    latencyPill.textContent = `Click Analyze to run ${ticker}.`;
   });
 });
+
+syncQuickPickSelection();

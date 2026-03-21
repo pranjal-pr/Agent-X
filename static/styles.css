@@ -620,6 +620,12 @@ button {
   border: 1px solid var(--outline-soft);
 }
 
+.chip.active {
+  background: rgba(2, 115, 94, 0.16);
+  border-color: rgba(2, 115, 94, 0.26);
+  color: var(--accent);
+}
+
 .design-chip {
   padding: 0.68rem 0.95rem;
   background: var(--pill-bg);
@@ -692,10 +698,11 @@ button {
   display: grid;
   gap: 1rem;
   margin-top: 1rem;
+  align-items: start;
 }
 
 .summary-grid {
-  grid-template-columns: 1.1fr 1.2fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .detail-grid {
@@ -706,6 +713,11 @@ button {
 .metrics-card,
 .detail-grid .panel {
   padding: 1.4rem;
+}
+
+.metrics-card {
+  display: grid;
+  gap: 1rem;
 }
 
 .recommendation-topline {
@@ -749,12 +761,13 @@ h2 {
 
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
 }
 
 .metric-card {
-  padding: 1rem;
+  min-height: 6.9rem;
+  padding: 1rem 1.05rem;
   border-radius: var(--radius-lg);
   background: var(--surface-card);
   border: 1px solid var(--outline-soft);
@@ -772,7 +785,20 @@ h2 {
 }
 
 .insight-block {
-  margin-top: 1rem;
+  margin-top: 0.15rem;
+  padding: 1rem 1.05rem 1.1rem;
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  border: 1px solid var(--outline-soft);
+}
+
+.insight-block h3 {
+  margin: 0 0 0.65rem;
+  font-size: 1.05rem;
+}
+
+.insight-block .body-copy {
+  margin: 0;
 }
 
 .signal-list {
