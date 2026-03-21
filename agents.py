@@ -53,7 +53,7 @@ def build_agents(llm: LLM) -> AgentBundle:
         tools=[YFinanceTechnicalsTool()],
         verbose=False,
         allow_delegation=False,
-        max_iter=1,
+        max_iter=2,
     )
 
     news_sentinel = Agent(
@@ -70,7 +70,7 @@ def build_agents(llm: LLM) -> AgentBundle:
         tools=[DuckDuckGoNewsTool()],
         verbose=False,
         allow_delegation=False,
-        max_iter=1,
+        max_iter=2,
     )
 
     quantitative_strategist = Agent(

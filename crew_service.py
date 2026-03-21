@@ -10,8 +10,7 @@ from pydantic import BaseModel
 
 from agents import DEFAULT_GROQ_MODEL, build_agents, build_groq_llm
 from models import AnalyzeResponse, AttachmentSummary, FinalRecommendation, NewsDigest, TechnicalAnalysis
-from tasks import build_strategist_task
-from tools import DuckDuckGoNewsTool, YFinanceTechnicalsTool
+from tasks import build_tasks
 
 ModelT = TypeVar("ModelT", bound=BaseModel)
 ANALYSIS_TIMEOUT_SECONDS = 35
@@ -29,6 +28,18 @@ def _coerce_task_output(task_output: Any, model_cls: type[ModelT]) -> ModelT:
     raise ValueError(f"Task output did not contain a valid {model_cls.__name__} payload.")
 
 
+def _resolve_task_outputs(result: Any, tasks: list[Any]) -> list[Any]:
+    task_outputs = list(getattr(result, "tasks_output", None) or [])
+    if len(task_outputs) >= len(tasks):
+        return task_outputs
+
+    fallback_outputs = [getattr(task, "output", None) for task in tasks]
+    if len(fallback_outputs) >= len(tasks) and all(output is not None for output in fallback_outputs):
+        return fallback_outputs
+
+    raise ValueError("CrewAI did not return all expected task outputs.")
+
+
 async def analyze_stock(
     ticker: str,
     model_name: str | None = None,
@@ -37,16 +48,13 @@ async def analyze_stock(
     normalized_ticker = ticker.strip().upper()
     start = perf_counter()
 
-    technicals = TechnicalAnalysis.model_validate_json(YFinanceTechnicalsTool()._run(normalized_ticker))
-    news = NewsDigest.model_validate_json(DuckDuckGoNewsTool()._run(normalized_ticker))
-
     llm = build_groq_llm(model_name)
     agents = build_agents(llm)
-    strategist_task = build_strategist_task(agents, technicals, news)
+    tasks = build_tasks(agents, normalized_ticker)
 
     crew = Crew(
-        agents=[agents.quantitative_strategist],
-        tasks=[strategist_task],
+        agents=agents.as_list(),
+        tasks=tasks,
         process=Process.sequential,
         verbose=False,
         memory=False,
@@ -63,11 +71,10 @@ async def analyze_stock(
         ) from exc
     latency_seconds = round(perf_counter() - start, 2)
 
-    task_outputs = getattr(result, "tasks_output", None) or []
-    if len(task_outputs) < 1:
-        raise ValueError("CrewAI did not return a strategist output.")
-
-    recommendation = _coerce_task_output(task_outputs[0], FinalRecommendation)
+    task_outputs = _resolve_task_outputs(result, tasks)
+    technicals = _coerce_task_output(task_outputs[0], TechnicalAnalysis)
+    news = _coerce_task_output(task_outputs[1], NewsDigest)
+    recommendation = _coerce_task_output(task_outputs[2], FinalRecommendation)
 
     return AnalyzeResponse(
         ticker=normalized_ticker,
